@@ -8,7 +8,7 @@ import tkinter as tk
 from tkinter import *
 from tkinter import messagebox as MessageBox
 from datetime import datetime, timedelta
-#from email_validator import validate_email, EmailNotValidError
+from email_validator import validate_email, EmailNotValidError
 import validate_email
 
 
