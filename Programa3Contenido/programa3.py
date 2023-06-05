@@ -2,12 +2,14 @@
 #Realizado por Emmanuel Rodríguez y José Miguel González Barrantes
 """Información importante"""
 
+#Módulos
 from tkinter import ttk
 import tkinter as tk
 from tkinter import *
 from tkinter import messagebox as MessageBox
 from datetime import datetime, timedelta
-from email_validator import validate_email, EmailNotValidError
+#from email_validator import validate_email, EmailNotValidError
+import validate_email
 
 
 #Programa principal (ventana principal)
@@ -204,6 +206,12 @@ def programar_citas ():
         lista_horas_listbox = tk.Variable (value = cantidad_de_horas_mostrar)
         fecha_listbox = tk.Listbox (ventana_programar_citas, listvariable= lista_horas_listbox, height = 5)
         fecha_listbox.place (x = 520, y = 750)
+
+def acerca_de():
+    MessageBox.showinfo("Acerca de", "Programa ReTeVe\nVersión del programa 1.0\
+\nFecha de creación: 19/06/2023\nDesarrollado por: Emmanuel Rodríguez Rivas y Jose Miguel Gonzáles Barrantes")
+    
+
 ventana_principal.mainloop ()
 
 
