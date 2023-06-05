@@ -1,0 +1,41 @@
+[33mcommit 384621a13ae6efe28d360f75aec1136174079649[m[33m ([m[1;36mHEAD -> [m[1;32memmanuel[m[33m)[m
+Author: Emmanuel Rodríguez Rivas <emmanueldrr22@gmail.com>
+Date:   Sun Jun 4 22:33:23 2023 -0600
+
+    Borré el import de los emails como prueba
+
+[33mcommit 5dac2b3b57e969d41596cd03329eea4d205aca46[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmain[m[33m)[m
+Author: Chepe607 <135440386+Chepe607@users.noreply.github.com>
+Date:   Sun Jun 4 19:41:27 2023 -0600
+
+    Avancé gran parte del programar citas
+
+[33mcommit 242cc16f88d92d0ccbac222e5cae07496fa5df88[m
+Author: Chepe607 <135440386+Chepe607@users.noreply.github.com>
+Date:   Sat Jun 3 15:22:59 2023 -0600
+
+    Se adelantó lo anterior
+
+[33mcommit fad0d3be5e467ee4d67f3b15bfac371d57ed9cbc[m
+Author: Chepe607 <135440386+Chepe607@users.noreply.github.com>
+Date:   Sat Jun 3 15:20:55 2023 -0600
+
+    Se adelantó con la interfaz de usuario, un poco de validaciones e investigación.
+
+[33mcommit 044b1111a4629f10d280ebd7ade57ec42db1ec5d[m
+Author: Chepe607 <135440386+Chepe607@users.noreply.github.com>
+Date:   Sat Jun 3 10:34:02 2023 -0600
+
+    Realicé cambios del menú
+
+[33mcommit c062776497bffcd9d1e082954a7bd81ef91b6364[m
+Author: Chepe607 <135440386+Chepe607@users.noreply.github.com>
+Date:   Sat Jun 3 09:10:08 2023 -0600
+
+    cambie la localizacion de los archivos a una carpeta
+
+[33mcommit 70aa9aae1cfb9e040fd1385faee960bf4b1c0dd8[m
+Author: Chepe607 <135440386+Chepe607@users.noreply.github.com>
+Date:   Sat Jun 3 09:06:27 2023 -0600
+
+    first commit
