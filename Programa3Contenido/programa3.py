@@ -8,6 +8,8 @@ from tkinter import *
 from tkinter import messagebox as MessageBox
 from datetime import datetime, timedelta
 from email_validator import validate_email, EmailNotValidError
+print("Es una prueba")
+print("s")
 
 
 
