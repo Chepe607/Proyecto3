@@ -9,8 +9,6 @@ from tkinter import messagebox as MessageBox
 from datetime import datetime, timedelta
 from email_validator import validate_email, EmailNotValidError
 
-
-
 #Programa principal (ventana principal)
 ventana_principal = tk.Tk ()
 ventana_principal.title ("Menú principal ReTeVe")
