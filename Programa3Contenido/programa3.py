@@ -11,8 +11,6 @@ from email_validator import validate_email, EmailNotValidError
 print("Es una prueba")
 print("s")
 
-
-
 #Programa principal (ventana principal)
 ventana_principal = tk.Tk ()
 ventana_principal.title ("Menú principal ReTeVe")
