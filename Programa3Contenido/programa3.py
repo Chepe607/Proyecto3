@@ -98,22 +98,28 @@ def programar_citas ():
 
     def generar_horas ():
         global cantidad_de_horas_mostrar
-        hora_comienzo = 1
-        hora_termino = 23
+        hora_comienzo = 8
+        hora_termino = 20
         duracion_citas = 20
-        #dias = 
-
+        meses_a_considerar = 12
         hora_actual = datetime.now ()
 
         #Lista de las horas a mostrar:
-        if hora_comienzo <= hora_actual.hour <= hora_termino:
-            hora_actual_mod = hora_actual
-            hora_termino_mod = datetime.now ().replace (hour= hora_termino, minute = 0, second = 0)
-            #Generar las listas de horas:
-            while hora_actual_mod <= hora_termino_mod:
-                cantidad_de_horas_mostrar.append (hora_actual_mod.strftime ("%d/%m/%Y %I:%M %p"))
-
-                hora_actual_mod += timedelta(minutes = duracion_citas)
+        
+        hora_actual_mod = hora_actual
+        mes_termino = hora_actual.month + meses_a_considerar
+        anio_termino = hora_actual.year + (mes_termino > 12)
+        if mes_termino % 12 != 0:
+            mes_termino = mes_termino % 12
+        else:
+            mes_termino = 12
+        hora_termino_mod = datetime(anio_termino, mes_termino, hora_actual.day, hora_termino)
+        while hora_actual_mod <= hora_termino_mod:
+            if hora_comienzo <= hora_actual_mod.hour < hora_termino:
+                cantidad_de_horas_mostrar.append(hora_actual_mod.strftime("%d/%m/%Y %I:%M %p"))
+                
+            hora_actual_mod += timedelta(minutes=duracion_citas)
+            
             
         print (cantidad_de_horas_mostrar)
 
