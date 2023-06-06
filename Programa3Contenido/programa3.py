@@ -10,6 +10,7 @@ from tkinter import messagebox as MessageBox
 from datetime import datetime, timedelta
 from email_validator import validate_email, EmailNotValidError
 import validate_email
+from tkcalendar import *
 
 
 #Programa principal (ventana principal)
@@ -32,19 +33,19 @@ ventana_principal.config (menu = menuBarra)
 #Elementos ventana principal
 bienvenida_menu = tk.Label (ventana_principal, text = "Menú ReTeVe: Revisión Técnica de Vehículos", font = "Helvetica 15 bold", bg = "white")
 bienvenida_menu.place (x= 12, y = 50)
-bienvenida = tk.Label (ventana_principal, text = "Bienvenido al programa de revisión de vehiculos ReTeVe", font = "Helvetica 9 bold", bg = "white")
+bienvenida = Label (ventana_principal, text = "Bienvenido al programa de revisión de vehiculos ReTeVe", font = "Helvetica 9 bold", bg = "white")
 bienvenida.place (x= 12, y = 100)
 navegacion = tk.Label (ventana_principal, text = "Para continuar, por favor utilice las opciones de la parte superior o inferior de la ventana.", font = "Helvetica 9 bold", bg = "white")
 navegacion.place (x= 12, y = 150)
 
 #Botones de opciones principales
-boton_programar_cita = tk.Button (ventana_principal, text = "Programar cita",  width = 20, height = 3, bg = "#C7D0D7", command = lambda: programar_citas())
-boton_programar_cita.place (x= 40, y = 230)
-boton_cancelar_cita = tk.Button (ventana_principal, text = "Cancelar cita",  width = 20, height = 3, bg = "#C7D0D7", command = lambda: cancelar_citas () )
-boton_cancelar_cita.place (x= 40, y = 330)
-boton_ingresar_cita = tk.Button (ventana_principal, text = "Ingresar cita",  width = 20, height = 3, bg = "#C7D0D7", command = lambda: ingresar_citas () )
+boton_programar_cita = tk.Button (ventana_principal, text = "Programar cita", font = "Helvetica 10 bold", width = 20, height = 3, bg = "#C7D0D7", command = lambda: programar_citas())
+boton_programar_cita.place (x= 70, y = 230)
+boton_cancelar_cita = tk.Button (ventana_principal, text = "Cancelar cita",font = "Helvetica 10 bold",  width = 20, height = 3, bg = "#C7D0D7", command = lambda: cancelar_citas () )
+boton_cancelar_cita.place (x= 70, y = 330)
+boton_ingresar_cita = tk.Button (ventana_principal, text = "Ingresar cita",font = "Helvetica 10 bold",  width = 20, height = 3, bg = "#C7D0D7", command = lambda: ingresar_citas () )
 boton_ingresar_cita.place (x= 300, y = 230)
-boton_tablero = tk.Button (ventana_principal, text = "Tablero revisión", width = 20, height = 3, bg = "#C7D0D7", command = lambda: tablero_revision () )
+boton_tablero = tk.Button (ventana_principal, text = "Tablero revisión",font = "Helvetica 10 bold", width = 20, height = 3, bg = "#C7D0D7", command = lambda: tablero_revision () )
 boton_tablero.place (x= 300, y = 330)
 
 #Funciones del programa
@@ -97,9 +98,10 @@ def programar_citas ():
 
     def generar_horas ():
         global cantidad_de_horas_mostrar
-        hora_comienzo = 8
-        hora_termino = 20
+        hora_comienzo = 1
+        hora_termino = 23
         duracion_citas = 20
+        #dias = 
 
         hora_actual = datetime.now ()
 
@@ -114,6 +116,62 @@ def programar_citas ():
                 hora_actual_mod += timedelta(minutes = duracion_citas)
             
         print (cantidad_de_horas_mostrar)
+
+    def mostrar_manual ():
+        valor_actual_manual = var_manual.get ()
+
+        if valor_actual_manual == True:
+            automatico.config (state = "disable")
+            ventana_manual = tk.Toplevel ()
+            ventana_manual.geometry ("700x550")
+            manual_label = tk.Label (ventana_manual, text = "Asignación de fecha y hora", font = "Helvetica 15 bold")
+            manual_label.place (x = 200, y = 30)
+            fecha_label = tk.Label (ventana_manual, text= "Seleccione la fecha deseada:", font = "Helvetica 13 bold")
+            fecha_label.place (x = 58, y = 150)
+
+            fecha_actual = datetime.now ()
+
+            calendario_fecha = Calendar(ventana_manual, year = fecha_actual.year, month = fecha_actual.month, day = fecha_actual.day , mindate = fecha_actual)
+            calendario_fecha.place (x = 50, y = 200)
+
+            hora_label = tk.Label (ventana_manual, text = "Seleccione la hora deseada:", font = "Helvetica 13 bold")
+            hora_label.place (x = 390, y = 150)
+            hora_entry = tk.Entry (ventana_manual, font = "Helvetica 12", width = 25, justify = "center")
+            hora_entry.place (x= 390, y = 200 )
+
+            boton_confirmacion_manual = tk.Button (ventana_manual, text = "Confirmar cita", font = "Helvetica 12 bold", width = 15, height = 3, bg= "#C7D0D7" )
+            boton_confirmacion_manual.place (x = 250, y = 420) ###FALTA VALIDACION DE LAS HORAS
+
+
+
+
+        else:
+            automatico.config (state = "normal")
+
+
+    def mostrar_automatico ():
+        valor_actual_automatico = var_automatico.get ()
+
+        if valor_actual_automatico == True:
+            manual.config (state = "disable")
+            generar_horas () #Se generan las horas
+
+            ventana_automatico = tk.Toplevel () #Ventana a mostrar
+            ventana_automatico.geometry ("300x300")
+
+            lista_horas_listbox = tk.Variable (value = cantidad_de_horas_mostrar) #Lista de las citas
+            fecha_listbox = tk.Listbox (ventana_automatico, listvariable= lista_horas_listbox, height = 10)
+            fecha_listbox.place (x= 80, y = 80 )
+            scrollbar_listbox = ttk.Scrollbar(ventana_automatico, orient = "vertical", command = fecha_listbox.yview)
+            
+            scrollbar_listbox.place (x= 200, y = 80, height = 160)
+            fecha_listbox["yscrollcommand"] = scrollbar_listbox.set
+
+        else:
+            manual.config (state = "normal")
+
+
+
 
 
         
@@ -198,18 +256,16 @@ def programar_citas ():
 
     var_automatico = tk.BooleanVar ()
     var_manual = tk.BooleanVar ()
-    manual = tk.Checkbutton (ventana_programar_citas, text = "Manual", variable = var_manual)
-    automatico = tk.Checkbutton (ventana_programar_citas, text = "Automático", variable = var_automatico)
+    manual = tk.Checkbutton (ventana_programar_citas, text = "Manual", variable = var_manual, command = lambda : mostrar_manual ())
+    automatico = tk.Checkbutton (ventana_programar_citas, text = "Automático", variable = var_automatico, command = lambda : mostrar_automatico ())
     manual.place (x= 450, y =600)
     automatico.place (x= 520, y = 600)
-    if var_automatico == True and var_manual == False:
-        lista_horas_listbox = tk.Variable (value = cantidad_de_horas_mostrar)
-        fecha_listbox = tk.Listbox (ventana_programar_citas, listvariable= lista_horas_listbox, height = 5)
-        fecha_listbox.place (x = 520, y = 750)
+
+    
 
 def acerca_de():
     MessageBox.showinfo("Acerca de", "Programa ReTeVe\nVersión del programa 1.0\
-\nFecha de creación: 19/06/2023\nDesarrollado por: Emmanuel Rodríguez Rivas y Jose Miguel Gonzáles Barrantes")
+\nFecha de creación: 19/06/2023\nDesarrollado por: Emmanuel Rodríguez Rivas y Jose Miguel González Barrantes")
     
 
 ventana_principal.mainloop ()
