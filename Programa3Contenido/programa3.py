@@ -480,7 +480,43 @@ telefono = tk.StringVar ()
 correo = tk.StringVar ()
 direccion_fisica = tk.StringVar ()
 
-#Variables
+cant_lineas_trabajo_fija = StringVar()
+hora_inicial_fija = StringVar()
+hora_final_fija = StringVar()
+minutos_cada_cita_fija = StringVar() 
+cant_max_dias_reinspeccion_fija = StringVar()
+fallas_graves_para_no_circular_fija = StringVar() 
+meses_considerados_automatico_fija = StringVar()
+porcentaje_IVA_fija = StringVar()
+particular_menor_igual_3500_fija = StringVar()
+particular_entre_3500_y_8000_fija = StringVar()
+carga_pesada_mayor_igual_8000_fija= StringVar()
+taxis_fija = StringVar()
+buses_fija = StringVar()
+motos_fija = StringVar()
+equipo_obras_fija = StringVar()
+equipo_agricola_fija = StringVar()
+
+
+#Variables fijas de la configuración
+cant_lineas_trabajo_fija = 6
+hora_inicial_fija = 6
+hora_final_fija = 21
+minutos_cada_cita_fija = 20 
+cant_max_dias_reinspeccion_fija = 30
+fallas_graves_para_no_circular_fija = 4 
+meses_considerados_automatico_fija = 1
+porcentaje_IVA_fija = 13.0
+particular_menor_igual_3500_fija = 10920
+particular_entre_3500_y_8000_fija = 14380
+carga_pesada_mayor_igual_8000_fija= 14380
+taxis_fija = 11785
+buses_fija = 14380
+motos_fija = 7195
+equipo_obras_fija = 14380
+equipo_agricola_fija = 6625
+
+
 
 
 
