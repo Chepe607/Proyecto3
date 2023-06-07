@@ -12,6 +12,127 @@ from email_validator import validate_email, EmailNotValidError
 from tkcalendar import *
 
 #Funciones
+
+def configuracion_sistema():
+
+    def cambiar_tarifa(elemento):
+        seleccionado = elemento.focus()
+        clave = elemento.item(seleccionado, "text")
+        valor = elemento.item(seleccionado, "values")
+        print(seleccionado, clave, valor)
+
+        datos = str(clave) + ", " + valor[0]
+        pregunta =  MessageBox.askquestion("Modificar", "Desea modificar la información seleccionada?\n" + datos)
+        if pregunta == MessageBox.YES:
+            elemento.set(seleccionado, column="col1", value=tarifa_modificada_etiqueta.get())
+
+    #Ventana
+    configuracion_sistema_ventana = Tk()
+    configuracion_sistema_ventana.geometry("900x900")
+    configuracion_sistema_ventana.title("Configuración del sistema")
+    configuracion_sistema_ventana.config(bg="gray")
+
+    #Elementos
+    titulo_configuracion_sistema = Label(configuracion_sistema_ventana, text="Configuración del sistema", font="Helvetica 20 bold")
+    titulo_configuracion_sistema.place(x=275, y=40)
+
+    #Líneas de trabajo (6)
+    lineas_trabajo_etiqueta = Label(configuracion_sistema_ventana, text="Cantidad de líneas de trabajo en la estación:", font="Helvetica 14 bold")
+    lineas_trabajo_entry = Entry(configuracion_sistema_ventana)
+    lineas_trabajo_etiqueta.place(x=50, y=120)
+    lineas_trabajo_entry.place(x=480, y=125)
+    
+    #Horario de la estación: Hora inicial (6:00 am) y hora final (9:00pm)
+    horario_estacion_etiqueta = Label(configuracion_sistema_ventana, text="Horario de la estación", font="Helvetica 14 bold")
+    hora_inicial_etiqueta = Label(configuracion_sistema_ventana, text="Hora inicial:", font="Helvetica 14 bold")
+    hora_final_etiqueta = Label(configuracion_sistema_ventana, text="Hora final:", font="Helvetica 14 bold")
+    hora_incial_entry = Entry(configuracion_sistema_ventana)
+    hora_final_entry = Entry(configuracion_sistema_ventana)
+    horario_estacion_etiqueta.place(x=50, y=160)
+    hora_inicial_etiqueta.place(x=90, y=190)
+    hora_final_etiqueta.place(x=90, y=220)
+    hora_incial_entry.place(x=220, y=195)
+    hora_final_entry.place(x=220, y=225)
+
+    #Minutos por cada cita de revisión (20)
+    minutos_cada_cita_etiqueta = Label(configuracion_sistema_ventana, text="Minutos por cada cita de revisión:", font="Helvetica 14 bold")
+    minutos_cada_cita_entry = Entry(configuracion_sistema_ventana)
+    minutos_cada_cita_etiqueta.place(x=50, y=260)
+    minutos_cada_cita_entry.place(x=380, y=265)
+
+    #Cantidad máxima de días naturales para reinspección (30)
+    cantidad_max_dias_resinspeccion_etiqueta = Label(configuracion_sistema_ventana, text="Cantidad máxima de días naturales para reinspección:", font="Helvetica 14 bold")
+    cantidad_max_dias_resinspeccion_entry = Entry(configuracion_sistema_ventana)
+    cantidad_max_dias_resinspeccion_etiqueta.place(x=50, y=300)
+    cantidad_max_dias_resinspeccion_entry.place(x=570, y=305)
+
+    #Cantidad de fallas graves para sacar vehículo de circulación (4)
+    fallas_graves_para_no_circular_etiqueta = Label(configuracion_sistema_ventana, text="Cantidad de fallas graves para sacar vehículo de circulación:", font="Helvetica 14 bold")
+    fallas_graves_para_no_circular_entry = Entry(configuracion_sistema_ventana)
+    fallas_graves_para_no_circular_etiqueta.place(x=50, y=340)
+    fallas_graves_para_no_circular_entry.place(x=630, y=345)
+
+    #Cantidad de meses considerados para desplegar citas disponibles en la parte automática de citas (1)
+    meses_considerados_automatico_etiqueta1 = Label(configuracion_sistema_ventana, text="Cantidad de meses que se van a considerar", font="Helvetica 14 bold")
+    meses_considerados_automatico_etiqueta2 = Label(configuracion_sistema_ventana, text="para desplegar todas las citas disponibles", font="Helvetica 14 bold")
+    meses_considerados_automatico_etiqueta3 = Label(configuracion_sistema_ventana, text="en la asignación automática de citas:", font="Helvetica 14 bold")
+    meses_considerados_automatico_entry = Entry(configuracion_sistema_ventana)
+    meses_considerados_automatico_etiqueta1.place(x=50, y=380)
+    meses_considerados_automatico_etiqueta2.place(x=50, y=405)
+    meses_considerados_automatico_etiqueta3.place(x=50, y=430)
+    meses_considerados_automatico_entry.place(x=405, y=435)
+
+    #% de Impuesto al Valor agregado (IVA) sobre la tarifa (13)
+    porcentaje_IVA_etiqueta = Label(configuracion_sistema_ventana, text="Porcentaje de Impuesto al Valor Agregado (IVA) sobre la tarifa:", font="Helvetica 14 bold")
+    porcentaje_IVA_entry = Entry(configuracion_sistema_ventana)
+    porcentaje_IVA_etiqueta.place(x=50, y=470)
+    porcentaje_IVA_entry.place(x=645, y=475)
+
+    #Tabla de tarifas
+    tarifas_tv = ttk.Treeview(configuracion_sistema_ventana, columns=("col1"))
+    tarifas_tv.column("#0", width=500, anchor=CENTER)
+    tarifas_tv.column("col1", width=80, anchor=CENTER)
+
+    tarifas_tv.heading("#0", text="VEHÍCULOS", anchor=CENTER)
+    tarifas_tv.heading("col1", text="TARIFA", anchor=CENTER)
+
+    tarifas_tv.insert("", END, text="Automóvil particular y vehículo de carga liviana (menor o igual a 3500 kg)", values="10920")
+    tarifas_tv.insert("", END, text="Automóvil particular y vehículo de carga liviana (mayor a 3500 kg pero menor a 8000 kg)", values="14380")
+    tarifas_tv.insert("", END, text="Vehículo de carga pesada y cabezales (mayor o igual a 8000 kg)", values="14380")
+    tarifas_tv.insert("", END, text="Taxis", values="11785")
+    tarifas_tv.insert("", END, text="Autobuses, buses y microbuses", values="14380")
+    tarifas_tv.insert("", END, text="Motocicletas", values="7195")
+    tarifas_tv.insert("", END, text="Equipo especial de obras", values="14380")
+    tarifas_tv.insert("", END, text="Equipo especial agrícola (maquinaria agrícola)", values="6625")
+
+    tarifas_tv.place(x=50, y=550)
+
+    #Botón cambiar tarifa
+    cambiar = Button(configuracion_sistema_ventana, text="Cambiar tarifa", font="Helvetica 10 bold", bg="brown", command=lambda: cambiar_tarifa(tarifas_tv, tarifa_modificada_etiqueta))
+    cambiar.place(x=710, y=647)
+
+    #Entrada para cambiar tarifa
+    tarifa_modificada_etiqueta = Entry(configuracion_sistema_ventana)
+    tarifa_modificada_etiqueta.place(x=700, y=625)
+
+    #Texto para mostrar donde se cambia la tarifa
+    tarifa_nueva_etiqueta = Label(configuracion_sistema_ventana, text="Tarifa nueva", bg="gray", font="Helvetica 14 bold")
+    tarifa_nueva_etiqueta.place(x=700, y=595)
+
+    #Botones guardar configuración y volver atrás
+    guardar_config_boton = Button(configuracion_sistema_ventana, text="Guardar configuración", font="Helvetica 10 bold", bg="#08f26e", width=22, height=4)
+    guardar_config_boton.place(x=200, y=800)
+    volver_atras_boton = Button(configuracion_sistema_ventana, text="Volver atrás", font="Helvetica 10 bold", bg="#ff3333", width=22, height=4)
+    volver_atras_boton.place(x=500, y=800)
+
+  
+
+
+
+    configuracion_sistema_ventana.mainloop()
+
+
+
 def programar_citas ():
     global cantidad_de_horas_mostrar
 
