@@ -10,6 +10,11 @@ from tkinter import messagebox as MessageBox
 from datetime import datetime, timedelta
 from email_validator import validate_email, EmailNotValidError
 from tkcalendar import *
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from email.mime.base import MIMEBase
+from email.mime.application import MIMEApplication
 
 #Funciones
 
@@ -27,10 +32,10 @@ def configuracion_sistema():
             elemento.set(seleccionado, column="col1", value=tarifa_modificada_etiqueta.get())
 
     #Ventana
-    configuracion_sistema_ventana = Tk()
+    configuracion_sistema_ventana = tk.Toplevel()
     configuracion_sistema_ventana.geometry("900x900")
     configuracion_sistema_ventana.title("Configuración del sistema")
-    configuracion_sistema_ventana.config(bg="gray")
+    #configuracion_sistema_ventana.config(bg="gray")
 
     #Elementos
     titulo_configuracion_sistema = Label(configuracion_sistema_ventana, text="Configuración del sistema", font="Helvetica 20 bold")
@@ -108,7 +113,7 @@ def configuracion_sistema():
     tarifas_tv.place(x=50, y=550)
 
     #Botón cambiar tarifa
-    cambiar = Button(configuracion_sistema_ventana, text="Cambiar tarifa", font="Helvetica 10 bold", bg="brown", command=lambda: cambiar_tarifa(tarifas_tv, tarifa_modificada_etiqueta))
+    cambiar = Button(configuracion_sistema_ventana, text="Cambiar tarifa", font="Helvetica 10 bold", bg="brown", command=lambda: cambiar_tarifa(tarifas_tv))
     cambiar.place(x=710, y=647)
 
     #Entrada para cambiar tarifa
@@ -116,7 +121,7 @@ def configuracion_sistema():
     tarifa_modificada_etiqueta.place(x=700, y=625)
 
     #Texto para mostrar donde se cambia la tarifa
-    tarifa_nueva_etiqueta = Label(configuracion_sistema_ventana, text="Tarifa nueva", bg="gray", font="Helvetica 14 bold")
+    tarifa_nueva_etiqueta = Label(configuracion_sistema_ventana, text="Tarifa nueva", font="Helvetica 14 bold")
     tarifa_nueva_etiqueta.place(x=700, y=595)
 
     #Botones guardar configuración y volver atrás
@@ -178,6 +183,13 @@ def programar_citas ():
         if len (propetario.get ()) > 40 or len (propetario.get ()) < 6:
             MessageBox.showerror ("Error", "El dato a ingresar del propetario debe tener una extensión entre 6 y 40 caracteres")
             return False
+        
+        correo = correo_entry.get ()
+        validacion_correo = es_correo_valido (correo)
+        
+        if validacion_correo == False:
+            MessageBox.showerror ("Error", "El correo electrónico ingresado no es válido")
+            return False
 
         if len (direccion_fisica.get ()) < 10 or len (direccion_fisica.get ()) > 40:
             MessageBox.showerror ("Error", "La dirección física debe ser una entre 10 y 40 caracteres")
@@ -188,32 +200,36 @@ def programar_citas ():
             return False
         
         return True
-    def generar_horas ():
+    
+    def generar_horas (): #Generar los valores de las horas dependiendo y teniendo en cuenta la configuración default
         global cantidad_de_horas_mostrar
-        hora_comienzo = 8
-        hora_termino = 20
-        duracion_citas = 20
-        meses_a_considerar = 3
+        hora_inicial_fija = 6
+        hora_final_fija = 21
+        minutos_cada_cita_fija = 20
+        meses_considerados_automatico_fija = 3
         hora_actual = datetime.now ()
 
         #Lista de las horas a mostrar:
         
         hora_actual_mod = hora_actual
-        mes_termino = hora_actual.month + meses_a_considerar
+        mes_termino = hora_actual.month + meses_considerados_automatico_fija
         anio_termino = hora_actual.year + (mes_termino > 12)
         if mes_termino % 12 != 0:
             mes_termino = mes_termino % 12
         else:
             mes_termino = 12
-        hora_termino_mod = datetime(anio_termino, mes_termino, hora_actual.day, hora_termino)
+        hora_termino_mod = datetime(anio_termino, mes_termino, hora_actual.day, hora_final_fija)
         while hora_actual_mod <= hora_termino_mod:
-            if hora_comienzo <= hora_actual_mod.hour < hora_termino:
+            if hora_inicial_fija <= hora_actual_mod.hour < hora_final_fija:
                 cantidad_de_horas_mostrar.append(hora_actual_mod.strftime("%d/%m/%Y %I:%M %p"))
                 
-            hora_actual_mod += timedelta(minutes=duracion_citas)
+            hora_actual_mod += timedelta(minutes=minutos_cada_cita_fija)
             
 
-    def mostrar_manual ():
+    def mostrar_manual (): #Mostrar ventana al seleccionar la opcion de manual
+        MessageBox.showinfo ("Información a considerar", "A la hora de realizar la escogencia de la fecha y hora, no cierre esta ventana hasta que guarde la cita correspondiente")
+
+        global hora_entry, calendario_fecha
         valor_actual_manual = var_manual.get ()
         hora_seleccionada = tk.StringVar ()
 
@@ -271,10 +287,13 @@ def programar_citas ():
             automatico.config (state = "normal")
 
 
-    def mostrar_automatico ():
+    def mostrar_automatico (): #Mostrar ventana al seleccionar la opcion de automático
+        global valor_seleccionado
+        MessageBox.showinfo ("Información a considerar", "A la hora de realizar la escogencia de la fecha y hora, no cierre esta ventana hasta que guarde la cita correspondiente")
         valor_actual_automatico = var_automatico.get ()
 
         def guardar_fecha_automatico (): #Obtener el dato seleccionado del listbox
+            global valor_seleccionado
             indice_valor_seleccionado = fecha_listbox.curselection() [0]
             valor_seleccionado = fecha_listbox.get (indice_valor_seleccionado)
             print (valor_seleccionado)
@@ -307,7 +326,7 @@ def programar_citas ():
         else:
             manual.config (state = "normal")
 
-    def bloquear_reinspeccion ():
+    def bloquear_reinspeccion (): #Bloquear opcion reinspeccion
         valor_actual_primera_vez = var_primera_vez.get ()
 
         if valor_actual_primera_vez == True:
@@ -316,7 +335,7 @@ def programar_citas ():
         else:
             tipo_cita_reinspeccion.config (state = "normal")
 
-    def bloquear_primera_vez ():
+    def bloquear_primera_vez (): #Bloquear opcion reinspeccion
         valor_actual_reinspeccion = var_reinspeccion.get ()
 
         if valor_actual_reinspeccion == True:
@@ -324,13 +343,62 @@ def programar_citas ():
         else:
             tipo_cita_primera_vez.config (state = "normal")
 
-    def guardar_cita ():
+    def guardar_cita (): #Guardar valores de las citas
         validacion = validar_entries ()
         if validacion == True:
-            print ("Prueba #1 PASA")
+            mandar_correo (correo_entry.get())
         else:
             print ("No pasa")
     
+    def mandar_correo (correo):
+        if var_manual.get () == True:
+            fecha_seleccionada = calendario_fecha.get_date ()
+            hora_seleccionada = hora_entry.get ()
+
+        #Definir credenciales del servidos SMTP
+        if "gmail" in correo:
+            smtp_port = 587
+            smtp_server = "smtp.gmail.com"
+
+        elif "hotmail" or "outlook" in correo:
+            smtp_port = 587
+            smtp_server = "smtp.live.com"
+
+
+        #Información del correo
+        correo_from = "josemiguel4484@gmail.com"
+        correo_to = correo
+        titulo = "Revisión Técnica de Vehículos (ReTeVe) / Cita Información Importante"
+        clave_from = "xxvnbsyriavzxhep"
+
+        #Creación del objeto MIME para definir las partes del correo
+        msg = MIMEMultipart ()
+        msg['From'] = correo_from
+        msg['To'] = correo_to
+        msg['Subject'] = titulo
+        
+        #Construcción del correo
+        if var_manual.get () == True:
+            body = f"""Saludos usuario, se le envió este correo electrónico debido a la solicitud de revisión técnica vehícular a nombre de esta dirección electrónica. Tome en cuenta que su cita será el día y hora respectivamente""" + " " + str(fecha_seleccionada) + " " + str(hora_seleccionada) 
+
+        elif var_automatico.get () == True:
+            body = f"""Saludos usuario, se le envió este correo electrónico debido a la solicitud de revisión técnica vehícular a nombre de esta dirección electrónica. Tome en cuenta que su cita será el día y hora respectivamente""" + " " + str (valor_seleccionado)
+
+
+        #Agregar el cuerpo del correo en el mensaje
+        msg.attach (MIMEText (body, 'plain'))
+
+        
+        text = msg.as_string ()
+
+        #Connectar con el servidor
+        TIE_server = smtplib.SMTP (smtp_server, smtp_port, timeout = 60 )
+        TIE_server.starttls ()
+        TIE_server.login(correo_from, clave_from)
+
+
+        TIE_server.sendmail (correo_from, correo_to, text) #Enviar el correo
+        TIE_server.quit () #Salir del servidor
 
 
 
