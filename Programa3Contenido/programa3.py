@@ -17,25 +17,95 @@ from email.mime.base import MIMEBase
 from email.mime.application import MIMEApplication
 
 #Funciones
+"""cant_lineas_trabajo_fija = cant_lineas_trabajo.get()
+            hora_inicial_fija = hora_inicial.get()
+            hora_final_fija = hora_final.get()
+            minutos_cada_cita_fija = minutos_cada_cita.get()
+            cant_max_dias_reinspeccion_fija = cant_max_dias_reinspeccion.get()
+            fallas_graves_para_no_circular_fija = fallas_graves_para_no_circular.get()
+            meses_considerados_automatico_fija = meses_considerados_automatico.get()
+            porcentaje_IVA_fija = porcentaje_IVA.get()"""
 
 def configuracion_sistema():
 
+    def validar_entradas():
+        try:
+            prueba = int(cant_lineas_trabajo.get())
+            prueba = int(hora_inicial.get())
+            prueba = int(hora_final.get())
+            prueba = int(minutos_cada_cita.get())
+            prueba = int(cant_max_dias_reinspeccion.get())
+            prueba = int(fallas_graves_para_no_circular.get())
+            prueba = int(meses_considerados_automatico.get())
+            prueba = float(porcentaje_IVA.get())
+            
+        except:
+            MessageBox.showerror("Error", "Todos los datos ingresados deben ser enteros.")
+            return False
+        
+        if int(cant_lineas_trabajo.get()) < 0 or int(cant_lineas_trabajo.get()) > 25:
+            MessageBox.showerror("Error", "La cantidad de lineas de trabajo debe ser un número entre 1 y 25.")
+            return False
+        
+        if int(hora_inicial.get()) < 0 or int(hora_inicial.get()) > 23:
+            MessageBox.showerror("Error", "La hora inicial debe ser un entero entre 0 y 23.")
+            return False
+        
+        if int(hora_final.get()) < 0 or int(hora_final.get()) > 23 or int(hora_final.get()) < int(hora_inicial.get()):
+            MessageBox.showerror("Error", "La hora final debe ser un entero entre 0 y 23, y debe ser mayor o igual a la hora inicial.")
+            return False
+        
+        if int(minutos_cada_cita.get()) < 5 or int(minutos_cada_cita.get()) > 45:
+            MessageBox.showerror("Error", "La cantidad de minutos entre cada cita debe ser un entero entre 5 y 45.")
+            return False
+        
+        if int(cant_max_dias_reinspeccion.get()) < 1 or int(cant_max_dias_reinspeccion.get()) > 60:
+            MessageBox.showerror("Error", "La cantidad máxima de días naturales para una reinspección debe ser un entero entre 1 y 60.")
+            return False
+        
+        if int(fallas_graves_para_no_circular.get()) < 0:
+            MessageBox.showerror("Error", "La cantidad máxima de fallas graves para retirar un vehículo de circulación debe ser un entero mayor a 0.")
+            return False
+        
+        if int(meses_considerados_automatico.get()) < 1 or int(meses_considerados_automatico.get()) > 12:
+            MessageBox.showerror("Error", "La cantidad de meses considerados para desplegar las citas en modo automático debe ser\n\
+un entero entre 1 y 12")
+            return False
+        
+        if float(porcentaje_IVA.get()) < 0:
+            MessageBox.showerror("Error", "El porcentaje de Impuesto al Valor Agregado sobre la tarifa debe ser un número entre\n\
+0 y 20.")
+            return False
+        
+        print("Excelente")
+        return True
+
+
+        
+
     def cambiar_tarifa(elemento):
+        try:
+            tarifa_nueva = int(tarifa_modificada.get())
+            if tarifa_nueva <= 0:
+                MessageBox.showerror("Error", "La tarifa nueva debe ser un entero mayor a 0")
+                return
+        except:
+            MessageBox.showerror("Error", "Debe de ingresar un número mayor a 0.")
+            return 
         seleccionado = elemento.focus()
         clave = elemento.item(seleccionado, "text")
         valor = elemento.item(seleccionado, "values")
-        print(seleccionado, clave, valor)
 
-        datos = str(clave) + ", " + valor[0]
+        datos = str(clave) + ", " + str(valor[0])
         pregunta =  MessageBox.askquestion("Modificar", "Desea modificar la información seleccionada?\n" + datos)
         if pregunta == MessageBox.YES:
-            elemento.set(seleccionado, column="col1", value=tarifa_modificada_etiqueta.get())
+            elemento.set(seleccionado, column="col1", value=tarifa_nueva)
 
     #Ventana
     configuracion_sistema_ventana = tk.Toplevel()
     configuracion_sistema_ventana.geometry("900x900")
     configuracion_sistema_ventana.title("Configuración del sistema")
-    #configuracion_sistema_ventana.config(bg="gray")
+    
 
     #Elementos
     titulo_configuracion_sistema = Label(configuracion_sistema_ventana, text="Configuración del sistema", font="Helvetica 20 bold")
@@ -43,7 +113,8 @@ def configuracion_sistema():
 
     #Líneas de trabajo (6)
     lineas_trabajo_etiqueta = Label(configuracion_sistema_ventana, text="Cantidad de líneas de trabajo en la estación:", font="Helvetica 14 bold")
-    lineas_trabajo_entry = Entry(configuracion_sistema_ventana)
+    lineas_trabajo_entry = Entry(configuracion_sistema_ventana, textvariable= cant_lineas_trabajo)
+    lineas_trabajo_entry.insert(0, cant_lineas_trabajo_fija)
     lineas_trabajo_etiqueta.place(x=50, y=120)
     lineas_trabajo_entry.place(x=480, y=125)
     
@@ -51,29 +122,34 @@ def configuracion_sistema():
     horario_estacion_etiqueta = Label(configuracion_sistema_ventana, text="Horario de la estación", font="Helvetica 14 bold")
     hora_inicial_etiqueta = Label(configuracion_sistema_ventana, text="Hora inicial:", font="Helvetica 14 bold")
     hora_final_etiqueta = Label(configuracion_sistema_ventana, text="Hora final:", font="Helvetica 14 bold")
-    hora_incial_entry = Entry(configuracion_sistema_ventana)
-    hora_final_entry = Entry(configuracion_sistema_ventana)
+    hora_inicial_entry = Entry(configuracion_sistema_ventana, textvariable=hora_inicial)
+    hora_final_entry = Entry(configuracion_sistema_ventana, textvariable=hora_final)
+    hora_inicial_entry.insert(0, hora_inicial_fija)
+    hora_final_entry.insert(0, hora_final_fija)
     horario_estacion_etiqueta.place(x=50, y=160)
     hora_inicial_etiqueta.place(x=90, y=190)
     hora_final_etiqueta.place(x=90, y=220)
-    hora_incial_entry.place(x=220, y=195)
+    hora_inicial_entry.place(x=220, y=195)
     hora_final_entry.place(x=220, y=225)
 
     #Minutos por cada cita de revisión (20)
     minutos_cada_cita_etiqueta = Label(configuracion_sistema_ventana, text="Minutos por cada cita de revisión:", font="Helvetica 14 bold")
-    minutos_cada_cita_entry = Entry(configuracion_sistema_ventana)
+    minutos_cada_cita_entry = Entry(configuracion_sistema_ventana, textvariable=minutos_cada_cita)
+    minutos_cada_cita_entry.insert(0, minutos_cada_cita_fija)
     minutos_cada_cita_etiqueta.place(x=50, y=260)
     minutos_cada_cita_entry.place(x=380, y=265)
 
     #Cantidad máxima de días naturales para reinspección (30)
     cantidad_max_dias_resinspeccion_etiqueta = Label(configuracion_sistema_ventana, text="Cantidad máxima de días naturales para reinspección:", font="Helvetica 14 bold")
-    cantidad_max_dias_resinspeccion_entry = Entry(configuracion_sistema_ventana)
+    cantidad_max_dias_resinspeccion_entry = Entry(configuracion_sistema_ventana, textvariable=cant_max_dias_reinspeccion)
+    cantidad_max_dias_resinspeccion_entry.insert(0, cant_max_dias_reinspeccion_fija)
     cantidad_max_dias_resinspeccion_etiqueta.place(x=50, y=300)
     cantidad_max_dias_resinspeccion_entry.place(x=570, y=305)
 
     #Cantidad de fallas graves para sacar vehículo de circulación (4)
     fallas_graves_para_no_circular_etiqueta = Label(configuracion_sistema_ventana, text="Cantidad de fallas graves para sacar vehículo de circulación:", font="Helvetica 14 bold")
-    fallas_graves_para_no_circular_entry = Entry(configuracion_sistema_ventana)
+    fallas_graves_para_no_circular_entry = Entry(configuracion_sistema_ventana, textvariable=fallas_graves_para_no_circular)
+    fallas_graves_para_no_circular_entry.insert(0, fallas_graves_para_no_circular_fija)
     fallas_graves_para_no_circular_etiqueta.place(x=50, y=340)
     fallas_graves_para_no_circular_entry.place(x=630, y=345)
 
@@ -81,7 +157,8 @@ def configuracion_sistema():
     meses_considerados_automatico_etiqueta1 = Label(configuracion_sistema_ventana, text="Cantidad de meses que se van a considerar", font="Helvetica 14 bold")
     meses_considerados_automatico_etiqueta2 = Label(configuracion_sistema_ventana, text="para desplegar todas las citas disponibles", font="Helvetica 14 bold")
     meses_considerados_automatico_etiqueta3 = Label(configuracion_sistema_ventana, text="en la asignación automática de citas:", font="Helvetica 14 bold")
-    meses_considerados_automatico_entry = Entry(configuracion_sistema_ventana)
+    meses_considerados_automatico_entry = Entry(configuracion_sistema_ventana, textvariable=meses_considerados_automatico)
+    meses_considerados_automatico_entry.insert(0, meses_considerados_automatico_fija)
     meses_considerados_automatico_etiqueta1.place(x=50, y=380)
     meses_considerados_automatico_etiqueta2.place(x=50, y=405)
     meses_considerados_automatico_etiqueta3.place(x=50, y=430)
@@ -89,7 +166,8 @@ def configuracion_sistema():
 
     #% de Impuesto al Valor agregado (IVA) sobre la tarifa (13)
     porcentaje_IVA_etiqueta = Label(configuracion_sistema_ventana, text="Porcentaje de Impuesto al Valor Agregado (IVA) sobre la tarifa:", font="Helvetica 14 bold")
-    porcentaje_IVA_entry = Entry(configuracion_sistema_ventana)
+    porcentaje_IVA_entry = Entry(configuracion_sistema_ventana, textvariable=porcentaje_IVA)
+    porcentaje_IVA_entry.insert(0, porcentaje_IVA_fija)
     porcentaje_IVA_etiqueta.place(x=50, y=470)
     porcentaje_IVA_entry.place(x=645, y=475)
 
@@ -116,22 +194,19 @@ def configuracion_sistema():
     cambiar = Button(configuracion_sistema_ventana, text="Cambiar tarifa", font="Helvetica 10 bold", bg="brown", command=lambda: cambiar_tarifa(tarifas_tv))
     cambiar.place(x=710, y=647)
 
-    #Entrada para cambiar tarifa
-    tarifa_modificada_etiqueta = Entry(configuracion_sistema_ventana)
-    tarifa_modificada_etiqueta.place(x=700, y=625)
+    #Entrada para modificar tarifa
+    tarifa_modificada_entrada = Entry(configuracion_sistema_ventana, textvariable=tarifa_modificada)
+    tarifa_modificada_entrada.place(x=700, y=625)
 
     #Texto para mostrar donde se cambia la tarifa
     tarifa_nueva_etiqueta = Label(configuracion_sistema_ventana, text="Tarifa nueva", font="Helvetica 14 bold")
     tarifa_nueva_etiqueta.place(x=700, y=595)
 
     #Botones guardar configuración y volver atrás
-    guardar_config_boton = Button(configuracion_sistema_ventana, text="Guardar configuración", font="Helvetica 10 bold", bg="#08f26e", width=22, height=4)
+    guardar_config_boton = Button(configuracion_sistema_ventana, text="Guardar configuración", font="Helvetica 10 bold", bg="#08f26e", width=22, height=4, command=lambda: validar_entradas())
+    volver_atras_boton = Button(configuracion_sistema_ventana, text="Volver atrás", font="Helvetica 10 bold", bg="#ff3333", width=22, height=4, command=lambda: configuracion_sistema_ventana.destroy())     
     guardar_config_boton.place(x=200, y=800)
-    volver_atras_boton = Button(configuracion_sistema_ventana, text="Volver atrás", font="Helvetica 10 bold", bg="#ff3333", width=22, height=4)
     volver_atras_boton.place(x=500, y=800)
-
-  
-
 
 
     configuracion_sistema_ventana.mainloop()
@@ -548,22 +623,23 @@ telefono = tk.StringVar ()
 correo = tk.StringVar ()
 direccion_fisica = tk.StringVar ()
 
-cant_lineas_trabajo_fija = StringVar()
-hora_inicial_fija = StringVar()
-hora_final_fija = StringVar()
-minutos_cada_cita_fija = StringVar() 
-cant_max_dias_reinspeccion_fija = StringVar()
-fallas_graves_para_no_circular_fija = StringVar() 
-meses_considerados_automatico_fija = StringVar()
-porcentaje_IVA_fija = StringVar()
-particular_menor_igual_3500_fija = StringVar()
-particular_entre_3500_y_8000_fija = StringVar()
-carga_pesada_mayor_igual_8000_fija= StringVar()
-taxis_fija = StringVar()
-buses_fija = StringVar()
-motos_fija = StringVar()
-equipo_obras_fija = StringVar()
-equipo_agricola_fija = StringVar()
+cant_lineas_trabajo = StringVar()
+hora_inicial = StringVar()
+hora_final = StringVar()
+minutos_cada_cita = StringVar() 
+cant_max_dias_reinspeccion = StringVar()
+fallas_graves_para_no_circular = StringVar() 
+meses_considerados_automatico = StringVar()
+porcentaje_IVA= StringVar()
+tarifa_modificada = StringVar()
+"""particular_menor_igual_3500 = 
+particular_entre_3500_y_8000 = 
+carga_pesada_mayor_igual_8000= 
+taxis = 
+buses = 
+motos = 
+equipo_obras = 
+equipo_agricola = """
 
 
 #Variables fijas de la configuración
