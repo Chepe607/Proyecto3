@@ -27,7 +27,9 @@ from email.mime.application import MIMEApplication
             porcentaje_IVA_fija = porcentaje_IVA.get()"""
 
 def configuracion_sistema():
-
+    global lineas_trabajo_entry, hora_inicial_entry, hora_final_entry, minutos_cada_cita_entry, cantidad_max_dias_resinspeccion_entry, fallas_graves_para_no_circular_entry, meses_considerados_automatico_entry, porcentaje_IVA_entry
+    bandera_entro_configuracion = True
+    cantidad_de_horas_mostrar = [ ]
     def validar_entradas():
         try:
             prueba = int(cant_lineas_trabajo.get())
@@ -69,12 +71,12 @@ def configuracion_sistema():
         
         if int(meses_considerados_automatico.get()) < 1 or int(meses_considerados_automatico.get()) > 12:
             MessageBox.showerror("Error", "La cantidad de meses considerados para desplegar las citas en modo automático debe ser\n\
-un entero entre 1 y 12")
+            un entero entre 1 y 12")
             return False
         
         if float(porcentaje_IVA.get()) < 0:
             MessageBox.showerror("Error", "El porcentaje de Impuesto al Valor Agregado sobre la tarifa debe ser un número entre\n\
-0 y 20.")
+            0 y 20.")
             return False
         
         print("Excelente")
@@ -277,28 +279,37 @@ def programar_citas ():
         return True
     
     def generar_horas (): #Generar los valores de las horas dependiendo y teniendo en cuenta la configuración default
-        global cantidad_de_horas_mostrar
-        hora_inicial_fija = 6
-        hora_final_fija = 21
-        minutos_cada_cita_fija = 20
-        meses_considerados_automatico_fija = 3
         hora_actual = datetime.now ()
 
         #Lista de las horas a mostrar:
-        
-        hora_actual_mod = hora_actual
-        mes_termino = hora_actual.month + meses_considerados_automatico_fija
-        anio_termino = hora_actual.year + (mes_termino > 12)
-        if mes_termino % 12 != 0:
-            mes_termino = mes_termino % 12
+        if bandera_entro_configuracion == True:
+            hora_actual_mod = hora_actual
+            mes_termino = hora_actual.month + int (meses_considerados_automatico_entry.get())
+            anio_termino = hora_actual.year + (mes_termino > 12)
+            if mes_termino % 12 != 0:
+                mes_termino = mes_termino % 12
+            else:
+                mes_termino = 12
+            hora_termino_mod = datetime(anio_termino, mes_termino, hora_actual.day, hora_final_entry.get())
+            while hora_actual_mod <= hora_termino_mod:
+                if int (hora_inicial_entry.get ()) <= hora_actual_mod.hour < int (hora_final_entry.get ()):
+                    cantidad_de_horas_mostrar.append(hora_actual_mod.strftime("%d/%m/%Y %I:%M %p"))
+                    
+                hora_actual_mod += timedelta(minutes=minutos_cada_cita_entry.get ())
         else:
-            mes_termino = 12
-        hora_termino_mod = datetime(anio_termino, mes_termino, hora_actual.day, hora_final_fija)
-        while hora_actual_mod <= hora_termino_mod:
-            if hora_inicial_fija <= hora_actual_mod.hour < hora_final_fija:
-                cantidad_de_horas_mostrar.append(hora_actual_mod.strftime("%d/%m/%Y %I:%M %p"))
-                
-            hora_actual_mod += timedelta(minutes=minutos_cada_cita_fija)
+            hora_actual_mod = hora_actual
+            mes_termino = hora_actual.month + int (meses_considerados_automatico_fija)
+            anio_termino = hora_actual.year + (mes_termino > 12)
+            if mes_termino % 12 != 0:
+                mes_termino = mes_termino % 12
+            else:
+                mes_termino = 12
+            hora_termino_mod = datetime(anio_termino, mes_termino, hora_actual.day, hora_final_fija)
+            while hora_actual_mod <= hora_termino_mod:
+                if int (hora_inicial_fija) <= hora_actual_mod.hour < int (hora_final_fija):
+                    cantidad_de_horas_mostrar.append(hora_actual_mod.strftime("%d/%m/%Y %I:%M %p"))
+                    
+                hora_actual_mod += timedelta(minutes=minutos_cada_cita_fija)
             
 
     def mostrar_manual (): #Mostrar ventana al seleccionar la opcion de manual
@@ -503,7 +514,7 @@ def programar_citas ():
 
     #Número de placa elementos
     numero_placa_label = tk.Label (ventana_programar_citas, text= "Número de placa:", font = "Helvetica 14 bold")
-    numero_placa_entry = tk.Entry (ventana_programar_citas, textvariable = numero_placa, width = 15, font = "Helvetica 12")
+    numero_placa_entry = tk.Entry (ventana_programar_citas, textvariable = numero_placa_cancelar, width = 15, font = "Helvetica 12")
     numero_placa_label.place (x = 220, y = 260)
     numero_placa_entry.place (x = 220, y = 300)
 
@@ -569,7 +580,35 @@ def programar_citas ():
     boton_cancelar = tk.Button (ventana_programar_citas, text = "Cancelar asignación de cita", font = "Helvetica 10 bold", bg = "#ff3333", height = 3, command = lambda: ventana_programar_citas.destroy () )
     boton_cancelar.place (x = 450, y = 650)
 
-    
+def cancelar_citas ():
+    def accion_cancelar ():
+        pass
+    ventana_cancelar_citas = tk.Toplevel ()
+    ventana_cancelar_citas.geometry ("600x350")
+
+    #Elementos de Bienvenida
+    label_principal_cancelar_citas = tk.Label (ventana_cancelar_citas, text = "Cancelar cita", font = "Helvetica 20 bold")
+    label_principal_cancelar_citas.place (x= 200, y = 40)
+    instruccion_cancelar_citas = tk.Label (ventana_cancelar_citas, text = "Ingrese en los campos en blanco sus datos correspondientes", font = "Helvetica 13")
+    instruccion_cancelar_citas.place (x= 75, y = 85)
+
+    #Elementos de la cita
+    numero_cita_label_cancelar = tk.Label (ventana_cancelar_citas, text = "Número de cita:", font = "Helvetica 14 bold")
+    numero_cita_label_cancelar.place (x = 70, y = 140)
+    numero_placa_label_cancelar = tk.Label (ventana_cancelar_citas, text = "Número de placa:", font = "Helvetica 14 bold")
+    numero_placa_label_cancelar.place (x = 360, y = 140)
+    numero_cita_entry_cancelar = tk.Entry (ventana_cancelar_citas, textvariable = contador_citas_cancelar, font = "Helvetica 12", width = 16, justify = "center")
+    numero_cita_entry_cancelar.place (x = 75, y = 190)
+    numero_placa_entry_cancelar = tk.Entry (ventana_cancelar_citas, textvariable = numero_placa_cancelar, font = "Helvetica 12", width = 18, justify = "center")
+    numero_placa_entry_cancelar.place (x = 360, y = 190)
+
+    boton_cancelar_cita = tk.Button (ventana_cancelar_citas, text = "Cancelar cita", font = "Helvetica 10 bold" , width = 23, height = 3, bg = "#08f26e")
+    boton_cancelar_cita.place (x = 195, y = 260)
+
+
+
+
+
 
 def acerca_de():
     MessageBox.showinfo("Acerca de", "Programa ReTeVe\nVersión del programa 1.0\
@@ -614,7 +653,10 @@ boton_tablero.place (x= 300, y = 330)
 
 #Funciones del programa
 contador_citas = 1
+bandera_entro_configuracion = False
 cantidad_de_horas_mostrar = []
+numero_placa_cancelar = tk.StringVar ()
+contador_citas_cancelar = tk.StringVar ()
 numero_placa = tk.StringVar ()
 marca_vehiculo = tk.StringVar ()
 modelo = tk.StringVar ()
@@ -632,6 +674,7 @@ fallas_graves_para_no_circular = StringVar()
 meses_considerados_automatico = StringVar()
 porcentaje_IVA= StringVar()
 tarifa_modificada = StringVar()
+
 """particular_menor_igual_3500 = 
 particular_entre_3500_y_8000 = 
 carga_pesada_mayor_igual_8000= 
