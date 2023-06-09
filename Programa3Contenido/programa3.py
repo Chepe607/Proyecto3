@@ -30,7 +30,7 @@ def configuracion_sistema():
     global lineas_trabajo_entry, hora_inicial_entry, hora_final_entry, minutos_cada_cita_entry, cantidad_max_dias_resinspeccion_entry, fallas_graves_para_no_circular_entry, meses_considerados_automatico_entry, porcentaje_IVA_entry
     bandera_entro_configuracion = True
     cantidad_de_horas_mostrar = [ ]
-<<<<<<< HEAD
+
     def limpiar_entradas():
         lineas_trabajo_entry.delete(0, END)
         hora_inicial_entry.delete(0, END)
@@ -78,8 +78,6 @@ def configuracion_sistema():
 
 
 
-=======
->>>>>>> e90919eaadb5fcca67547452efc4609a0d643045
     def validar_entradas():
         try:
             prueba = int(cant_lineas_trabajo.get())
@@ -295,6 +293,10 @@ def programar_citas ():
             MessageBox.showerror ("Error", "Debe ingresar un número de placa")
             return False
         
+        if len (tipo_vehiculo_combobox.get ()) == 0:
+            MessageBox.showerror ("Error", "Debe ingresar un tipo de vehículo")
+            return False
+        
         if len (marca_vehiculo.get ()) > 15 or len (marca_vehiculo.get ()) < 3:
             MessageBox.showerror ("Error", "La marca del vehículo debe ser mayor o igual a 3 caracteres y menor o igual a 15 caracteres")
             return False
@@ -331,7 +333,7 @@ def programar_citas ():
             return False
         
         if var_automatico.get () == False and var_manual.get () == False:
-            MessageBox.showerror ("Error", "Debe seleccionar al menos un tipo de cita")
+            MessageBox.showerror ("Error", "Debe seleccionar al menos un tipo de asignación de fecha y hora")
             return False
         
         return True
@@ -362,18 +364,19 @@ def programar_citas ():
                 mes_termino = mes_termino % 12
             else:
                 mes_termino = 12
-            hora_termino_mod = datetime(anio_termino, mes_termino, hora_actual.day, hora_final_fija)
+            hora_termino_mod = datetime(anio_termino, mes_termino, hora_actual.day, int (hora_final_fija))
             while hora_actual_mod <= hora_termino_mod:
                 if int (hora_inicial_fija) <= hora_actual_mod.hour < int (hora_final_fija):
                     cantidad_de_horas_mostrar.append(hora_actual_mod.strftime("%d/%m/%Y %I:%M %p"))
                     
-                hora_actual_mod += timedelta(minutes=minutos_cada_cita_fija)
+                hora_actual_mod += timedelta(minutes=int (minutos_cada_cita_fija))
             
 
     def mostrar_manual (): #Mostrar ventana al seleccionar la opcion de manual
+        global hora_entry, calendario_fecha, valor_seleccionado_manual
+
         MessageBox.showinfo ("Información a considerar", "A la hora de realizar la escogencia de la fecha y hora, no cierre esta ventana hasta que guarde la cita correspondiente")
 
-        global hora_entry, calendario_fecha
         valor_actual_manual = var_manual.get ()
         hora_seleccionada = tk.StringVar ()
 
@@ -385,19 +388,21 @@ def programar_citas ():
             except ValueError:
                 return False
             
-
         def boton_confirmacion (): #Acción de guardar los datos de manera manual
+            global valor_seleccionado_manual, hora_seleccionada, fecha_seleccionada
             fecha_seleccionada = calendario_fecha.get_date ()
             hora_seleccionada = hora_entry.get ()
 
             validacion = validar_hora_manual (hora_seleccionada)
             if validacion == True:
                 print ("Pasa #1", fecha_seleccionada, hora_seleccionada)
-                return True, fecha_seleccionada, hora_seleccionada
+                valor_seleccionado_manual = str (fecha_seleccionada) + " " + str (hora_seleccionada)
+                return valor_seleccionado_manual, hora_seleccionada
             else:
                 MessageBox.showerror ("Error", "Hora indicada es inválida")
-                return False, -1, -1
-            
+                valor_seleccionado_manual = False
+                return valor_seleccionado_manual
+                
         if valor_actual_manual == True:
             automatico.config (state = "disable")
             ventana_manual = tk.Toplevel ()
@@ -432,15 +437,16 @@ def programar_citas ():
 
 
     def mostrar_automatico (): #Mostrar ventana al seleccionar la opcion de automático
-        global valor_seleccionado
+        global valor_seleccionado_automatico
         MessageBox.showinfo ("Información a considerar", "A la hora de realizar la escogencia de la fecha y hora, no cierre esta ventana hasta que guarde la cita correspondiente")
         valor_actual_automatico = var_automatico.get ()
 
         def guardar_fecha_automatico (): #Obtener el dato seleccionado del listbox
-            global valor_seleccionado
+            global valor_seleccionado_automatico
             indice_valor_seleccionado = fecha_listbox.curselection() [0]
-            valor_seleccionado = fecha_listbox.get (indice_valor_seleccionado)
-            print (valor_seleccionado)
+            valor_seleccionado_automatico = fecha_listbox.get (indice_valor_seleccionado)
+            ####FALTA VALORAR LA DISPONIBILIDAD DE LAS CITAS
+            print (valor_seleccionado_automatico)
 
         if valor_actual_automatico == True:
             manual.config (state = "disable")
@@ -470,6 +476,13 @@ def programar_citas ():
         else:
             manual.config (state = "normal")
 
+    def validar_fechas_horas ():
+        if valor_seleccionado_manual == None and valor_seleccionado_automatico == None:
+            MessageBox.showerror ("Error", "Dentro de las opciones de manual y automático, debe seleccionar fecha y hora")
+            return False
+        else:
+            return True
+
     def bloquear_reinspeccion (): #Bloquear opcion reinspeccion
         valor_actual_primera_vez = var_primera_vez.get ()
 
@@ -493,7 +506,7 @@ def programar_citas ():
             validacion2 = validar_fechas_horas ()
             if validacion2 == True:
 
-            mandar_correo (correo_entry.get())
+                mandar_correo (correo_entry.get())
                 tipo_cita_primera_vez_f = var_primera_vez.get ()
                 tipo_cita_reinspeccion_f = var_manual.get ()
 
@@ -558,7 +571,7 @@ def programar_citas ():
             body = f"""Saludos usuario, se le envió este correo electrónico debido a la solicitud de revisión técnica vehícular a nombre de esta dirección electrónica. Tome en cuenta que su cita será el día y hora respectivamente""" + " " + str(fecha_seleccionada) + " " + str(hora_seleccionada) 
 
         elif var_automatico.get () == True:
-            body = f"""Saludos usuario, se le envió este correo electrónico debido a la solicitud de revisión técnica vehícular a nombre de esta dirección electrónica. Tome en cuenta que su cita será el día y hora respectivamente""" + " " + str (valor_seleccionado)
+            body = f"""Saludos usuario, se le envió este correo electrónico debido a la solicitud de revisión técnica vehícular a nombre de esta dirección electrónica. Tome en cuenta que su cita será el día y hora respectivamente""" + " " + str (valor_seleccionado_automatico)
 
 
         #Agregar el cuerpo del correo en el mensaje
@@ -604,7 +617,7 @@ def programar_citas ():
 
     #Número de placa elementos
     numero_placa_label = tk.Label (ventana_programar_citas, text= "Número de placa:", font = "Helvetica 14 bold")
-    numero_placa_entry = tk.Entry (ventana_programar_citas, textvariable = numero_placa_cancelar, width = 15, font = "Helvetica 12")
+    numero_placa_entry = tk.Entry (ventana_programar_citas, textvariable = numero_placa, width = 15, font = "Helvetica 12")
     numero_placa_label.place (x = 220, y = 260)
     numero_placa_entry.place (x = 220, y = 300)
 
@@ -745,6 +758,10 @@ boton_tablero.place (x= 300, y = 330)
 contador_citas = 1
 bandera_entro_configuracion = False
 cantidad_de_horas_mostrar = []
+cantidad_de_horas_mostrar = []
+arbol_citas = [ ]
+valor_seleccionado_manual = None
+valor_seleccionado_automatico = None
 numero_placa_cancelar = tk.StringVar ()
 contador_citas_cancelar = tk.StringVar ()
 numero_placa = tk.StringVar ()
@@ -784,7 +801,6 @@ cant_max_dias_reinspeccion_fija = 30
 fallas_graves_para_no_circular_fija = 4 
 meses_considerados_automatico_fija = 1
 porcentaje_IVA_fija = 13.0
-
 particular_menor_igual_3500_fija = 10920
 particular_entre_3500_y_8000_fija = 14380
 carga_pesada_mayor_igual_8000_fija= 14380
@@ -798,7 +814,6 @@ tarifas = [particular_menor_igual_3500_fija, particular_entre_3500_y_8000_fija, 
            taxis_fija, buses_fija, motos_fija, equipo_obras_fija, equipo_agricola_fija]
 
 lista_vehiculos = ["Automóvil particular y vehículo de carga liviana (<3500kg)", "Automóvil particular y vehículo de carga liviana (3500kg - 8000kg)", "Vehículo de carga pesada y cabezales (8000kg -)", "Taxis", "Busetas", "Motocicletas", "Equipo especial de obras", "Equipo especial de agrícola"]
-
 
 
 ventana_principal.mainloop ()
