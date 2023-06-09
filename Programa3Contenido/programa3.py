@@ -261,6 +261,10 @@ def programar_citas ():
             MessageBox.showerror ("Error", "El dato a ingresar del propetario debe tener una extensión entre 6 y 40 caracteres")
             return False
         
+        if len (telefono.get ()) != 20:
+            MessageBox.showerror ("Error", "Debe ingresar un número de teléfono de 20 caracteres")
+            return False
+
         correo = correo_entry.get ()
         validacion_correo = es_correo_valido (correo)
         
@@ -432,14 +436,46 @@ def programar_citas ():
     def guardar_cita (): #Guardar valores de las citas
         validacion = validar_entries ()
         if validacion == True:
+            validacion2 = validar_fechas_horas ()
+            if validacion2 == True:
+
             mandar_correo (correo_entry.get())
+                tipo_cita_primera_vez_f = var_primera_vez.get ()
+                tipo_cita_reinspeccion_f = var_manual.get ()
+
+                if tipo_cita_primera_vez_f == True:
+                    tipo_cita_f = "Primera vez"
+                elif tipo_cita_reinspeccion_f == True:
+                    tipo_cita_f = "Reinspección"
+
+                numero_placa_f = numero_placa_entry.get ()
+                tipo_de_vehiculo_f = tipo_vehiculo_combobox.get ()
+                marca_del_vehiculo_f = marca_del_vehiculo_entry.get ()
+                modelo_f = modelo_entry.get ()
+                propetario_f = propetario_entry.get ()
+                telefono_f = telefono_entry.get ()
+                correo_f = correo_entry.get ()
+                direccion_fisica_f = direccion_fisica_entry.get ()
+                estado_f = "PENDIENTE"
+                if var_automatico.get () == True:
+                    final = [tipo_cita_f, numero_placa_f, tipo_de_vehiculo_f, marca_del_vehiculo_f, modelo_f, propetario_f, telefono_f, correo_f, direccion_fisica_f, valor_seleccionado_automatico, estado_f]
+                elif var_manual.get () == True:
+                    final = [tipo_cita_f, numero_placa_f, tipo_de_vehiculo_f, marca_del_vehiculo_f, modelo_f, propetario_f, telefono_f, correo_f, direccion_fisica_f, valor_seleccionado_manual, estado_f]
+                print (final)
+            
+            else:
+                MessageBox.showerror ("Error", "Las fechas u horas son inválidas o no se ingreso ningúna")
+                return
+
+
         else:
-            print ("No pasa")
+            print ("No pasa entries y checkbuttons")
     
     def mandar_correo (correo):
         if var_manual.get () == True:
-            fecha_seleccionada = calendario_fecha.get_date ()
-            hora_seleccionada = hora_entry.get ()
+            #fecha_seleccionada = calendario_fecha.get_date ()
+            #hora_seleccionada = hora_entry.get ()
+            pass
 
         #Definir credenciales del servidos SMTP
         if "gmail" in correo:
