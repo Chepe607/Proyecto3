@@ -30,6 +30,7 @@ def configuracion_sistema():
     global lineas_trabajo_entry, hora_inicial_entry, hora_final_entry, minutos_cada_cita_entry, cantidad_max_dias_resinspeccion_entry, fallas_graves_para_no_circular_entry, meses_considerados_automatico_entry, porcentaje_IVA_entry
     bandera_entro_configuracion = True
     cantidad_de_horas_mostrar = [ ]
+<<<<<<< HEAD
     def limpiar_entradas():
         lineas_trabajo_entry.delete(0, END)
         hora_inicial_entry.delete(0, END)
@@ -77,6 +78,8 @@ def configuracion_sistema():
 
 
 
+=======
+>>>>>>> e90919eaadb5fcca67547452efc4609a0d643045
     def validar_entradas():
         try:
             prueba = int(cant_lineas_trabajo.get())
@@ -118,12 +121,12 @@ def configuracion_sistema():
         
         if int(meses_considerados_automatico.get()) < 1 or int(meses_considerados_automatico.get()) > 12:
             MessageBox.showerror("Error", "La cantidad de meses considerados para desplegar las citas en modo automático debe ser\n\
-un entero entre 1 y 12")
+            un entero entre 1 y 12")
             return False
         
         if float(porcentaje_IVA.get()) < 0:
             MessageBox.showerror("Error", "El porcentaje de Impuesto al Valor Agregado sobre la tarifa debe ser un número entre\n\
-0 y 20.")
+            0 y 20.")
             return False
         
         return True
