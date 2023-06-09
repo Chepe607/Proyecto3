@@ -30,6 +30,56 @@ def configuracion_sistema():
     global lineas_trabajo_entry, hora_inicial_entry, hora_final_entry, minutos_cada_cita_entry, cantidad_max_dias_resinspeccion_entry, fallas_graves_para_no_circular_entry, meses_considerados_automatico_entry, porcentaje_IVA_entry
     bandera_entro_configuracion = True
     cantidad_de_horas_mostrar = [ ]
+<<<<<<< HEAD
+    def limpiar_entradas():
+        lineas_trabajo_entry.delete(0, END)
+        hora_inicial_entry.delete(0, END)
+        hora_final_entry.delete(0, END)
+        minutos_cada_cita_entry.delete(0, END)
+        cantidad_max_dias_resinspeccion_entry.delete(0, END)
+        fallas_graves_para_no_circular_entry.delete(0, END)
+        meses_considerados_automatico_entry.delete(0, END)
+        porcentaje_IVA_entry.delete(0, END)
+        tarifa_modificada_entrada.delete(0, END)
+
+        configuracion_sistema_ventana.destroy()
+    
+
+    def guardar_informacion():
+        
+        if validar_entradas():
+            global cant_lineas_trabajo_fija, hora_inicial_fija, hora_final_fija, minutos_cada_cita_fija, cant_max_dias_reinspeccion_fija
+            global fallas_graves_para_no_circular_fija, meses_considerados_automatico_fija, porcentaje_IVA_fija
+            global particular_menor_igual_3500_fija, particular_entre_3500_y_8000_fija, carga_pesada_mayor_igual_8000_fija
+            global taxis_fija, buses_fija, motos_fija, equipo_obras_fija, equipo_agricola_fija
+
+            cant_lineas_trabajo_fija = cant_lineas_trabajo.get() 
+            hora_inicial_fija = hora_inicial.get()
+            hora_final_fija = hora_final.get()
+            minutos_cada_cita_fija = minutos_cada_cita.get()
+            cant_max_dias_reinspeccion_fija = cant_max_dias_reinspeccion.get()
+            fallas_graves_para_no_circular_fija = fallas_graves_para_no_circular.get()
+            meses_considerados_automatico_fija = meses_considerados_automatico.get()
+            porcentaje_IVA_fija = porcentaje_IVA.get()
+
+            for i, fila in enumerate(tarifas_tv.get_children()):
+                tarifas[i] = int(tarifas_tv.item(fila, "values")[0])
+
+            particular_menor_igual_3500_fija = tarifas[0]
+            particular_entre_3500_y_8000_fija = tarifas[1]
+            carga_pesada_mayor_igual_8000_fija= tarifas[2]
+            taxis_fija = tarifas[3]
+            buses_fija = tarifas[4]
+            motos_fija = tarifas[5]
+            equipo_obras_fija = tarifas[6]
+            equipo_agricola_fija = tarifas[7]
+
+            limpiar_entradas()
+
+
+
+=======
+>>>>>>> e90919eaadb5fcca67547452efc4609a0d643045
     def validar_entradas():
         try:
             prueba = int(cant_lineas_trabajo.get())
@@ -79,7 +129,6 @@ def configuracion_sistema():
             0 y 20.")
             return False
         
-        print("Excelente")
         return True
 
 
@@ -95,6 +144,9 @@ def configuracion_sistema():
             MessageBox.showerror("Error", "Debe de ingresar un número mayor a 0.")
             return 
         seleccionado = elemento.focus()
+        if seleccionado == "":
+            MessageBox.showerror("Error", "debe de seleccionar una línea de la tabla de tarifas.")
+            return 
         clave = elemento.item(seleccionado, "text")
         valor = elemento.item(seleccionado, "values")
 
@@ -181,14 +233,14 @@ def configuracion_sistema():
     tarifas_tv.heading("#0", text="VEHÍCULOS", anchor=CENTER)
     tarifas_tv.heading("col1", text="TARIFA", anchor=CENTER)
 
-    tarifas_tv.insert("", END, text="Automóvil particular y vehículo de carga liviana (menor o igual a 3500 kg)", values="10920")
-    tarifas_tv.insert("", END, text="Automóvil particular y vehículo de carga liviana (mayor a 3500 kg pero menor a 8000 kg)", values="14380")
-    tarifas_tv.insert("", END, text="Vehículo de carga pesada y cabezales (mayor o igual a 8000 kg)", values="14380")
-    tarifas_tv.insert("", END, text="Taxis", values="11785")
-    tarifas_tv.insert("", END, text="Autobuses, buses y microbuses", values="14380")
-    tarifas_tv.insert("", END, text="Motocicletas", values="7195")
-    tarifas_tv.insert("", END, text="Equipo especial de obras", values="14380")
-    tarifas_tv.insert("", END, text="Equipo especial agrícola (maquinaria agrícola)", values="6625")
+    tarifas_tv.insert("", END, text="Automóvil particular y vehículo de carga liviana (menor o igual a 3500 kg)", values=str(tarifas[0]))
+    tarifas_tv.insert("", END, text="Automóvil particular y vehículo de carga liviana (mayor a 3500 kg pero menor a 8000 kg)", values=str(tarifas[1]))
+    tarifas_tv.insert("", END, text="Vehículo de carga pesada y cabezales (mayor o igual a 8000 kg)", values=str(tarifas[2]))
+    tarifas_tv.insert("", END, text="Taxis", values=str(tarifas[3]))
+    tarifas_tv.insert("", END, text="Autobuses, buses y microbuses", values=str(tarifas[4]))
+    tarifas_tv.insert("", END, text="Motocicletas", values=str(tarifas[5]))
+    tarifas_tv.insert("", END, text="Equipo especial de obras", values=str(tarifas[6]))
+    tarifas_tv.insert("", END, text="Equipo especial agrícola (maquinaria agrícola)", values=str(tarifas[7]))
 
     tarifas_tv.place(x=50, y=550)
 
@@ -205,10 +257,12 @@ def configuracion_sistema():
     tarifa_nueva_etiqueta.place(x=700, y=595)
 
     #Botones guardar configuración y volver atrás
-    guardar_config_boton = Button(configuracion_sistema_ventana, text="Guardar configuración", font="Helvetica 10 bold", bg="#08f26e", width=22, height=4, command=lambda: validar_entradas())
-    volver_atras_boton = Button(configuracion_sistema_ventana, text="Volver atrás", font="Helvetica 10 bold", bg="#ff3333", width=22, height=4, command=lambda: configuracion_sistema_ventana.destroy())     
+    guardar_config_boton = Button(configuracion_sistema_ventana, text="Guardar configuración", font="Helvetica 10 bold", bg="#08f26e", width=22, height=4, command=lambda: guardar_informacion())
+    volver_atras_boton = Button(configuracion_sistema_ventana, text="Volver atrás", font="Helvetica 10 bold", bg="#ff3333", width=22, height=4, command=lambda: limpiar_entradas())     
     guardar_config_boton.place(x=200, y=800)
     volver_atras_boton.place(x=500, y=800)
+
+    
 
 
     configuracion_sistema_ventana.mainloop()
@@ -730,6 +784,7 @@ cant_max_dias_reinspeccion_fija = 30
 fallas_graves_para_no_circular_fija = 4 
 meses_considerados_automatico_fija = 1
 porcentaje_IVA_fija = 13.0
+
 particular_menor_igual_3500_fija = 10920
 particular_entre_3500_y_8000_fija = 14380
 carga_pesada_mayor_igual_8000_fija= 14380
@@ -739,11 +794,11 @@ motos_fija = 7195
 equipo_obras_fija = 14380
 equipo_agricola_fija = 6625
 
-
-
-
+tarifas = [particular_menor_igual_3500_fija, particular_entre_3500_y_8000_fija, carga_pesada_mayor_igual_8000_fija,
+           taxis_fija, buses_fija, motos_fija, equipo_obras_fija, equipo_agricola_fija]
 
 lista_vehiculos = ["Automóvil particular y vehículo de carga liviana (<3500kg)", "Automóvil particular y vehículo de carga liviana (3500kg - 8000kg)", "Vehículo de carga pesada y cabezales (8000kg -)", "Taxis", "Busetas", "Motocicletas", "Equipo especial de obras", "Equipo especial de agrícola"]
+
 
 
 ventana_principal.mainloop ()
