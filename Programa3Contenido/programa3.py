@@ -27,6 +27,55 @@ from email.mime.application import MIMEApplication
             porcentaje_IVA_fija = porcentaje_IVA.get()"""
 
 def configuracion_sistema():
+    global lineas_trabajo_entry, hora_inicial_entry, hora_final_entry, minutos_cada_cita_entry, cantidad_max_dias_resinspeccion_entry, fallas_graves_para_no_circular_entry, meses_considerados_automatico_entry, porcentaje_IVA_entry
+    bandera_entro_configuracion = True
+    cantidad_de_horas_mostrar = [ ]
+    def limpiar_entradas():
+        lineas_trabajo_entry.delete(0, END)
+        hora_inicial_entry.delete(0, END)
+        hora_final_entry.delete(0, END)
+        minutos_cada_cita_entry.delete(0, END)
+        cantidad_max_dias_resinspeccion_entry.delete(0, END)
+        fallas_graves_para_no_circular_entry.delete(0, END)
+        meses_considerados_automatico_entry.delete(0, END)
+        porcentaje_IVA_entry.delete(0, END)
+        tarifa_modificada_entrada.delete(0, END)
+
+        configuracion_sistema_ventana.destroy()
+    
+
+    def guardar_informacion():
+        
+        if validar_entradas():
+            global cant_lineas_trabajo_fija, hora_inicial_fija, hora_final_fija, minutos_cada_cita_fija, cant_max_dias_reinspeccion_fija
+            global fallas_graves_para_no_circular_fija, meses_considerados_automatico_fija, porcentaje_IVA_fija
+            global particular_menor_igual_3500_fija, particular_entre_3500_y_8000_fija, carga_pesada_mayor_igual_8000_fija
+            global taxis_fija, buses_fija, motos_fija, equipo_obras_fija, equipo_agricola_fija
+
+            cant_lineas_trabajo_fija = cant_lineas_trabajo.get() 
+            hora_inicial_fija = hora_inicial.get()
+            hora_final_fija = hora_final.get()
+            minutos_cada_cita_fija = minutos_cada_cita.get()
+            cant_max_dias_reinspeccion_fija = cant_max_dias_reinspeccion.get()
+            fallas_graves_para_no_circular_fija = fallas_graves_para_no_circular.get()
+            meses_considerados_automatico_fija = meses_considerados_automatico.get()
+            porcentaje_IVA_fija = porcentaje_IVA.get()
+
+            for i, fila in enumerate(tarifas_tv.get_children()):
+                tarifas[i] = int(tarifas_tv.item(fila, "values")[0])
+
+            particular_menor_igual_3500_fija = tarifas[0]
+            particular_entre_3500_y_8000_fija = tarifas[1]
+            carga_pesada_mayor_igual_8000_fija= tarifas[2]
+            taxis_fija = tarifas[3]
+            buses_fija = tarifas[4]
+            motos_fija = tarifas[5]
+            equipo_obras_fija = tarifas[6]
+            equipo_agricola_fija = tarifas[7]
+
+            limpiar_entradas()
+
+
 
     def validar_entradas():
         try:
@@ -77,7 +126,6 @@ un entero entre 1 y 12")
 0 y 20.")
             return False
         
-        print("Excelente")
         return True
 
 
@@ -93,6 +141,9 @@ un entero entre 1 y 12")
             MessageBox.showerror("Error", "Debe de ingresar un número mayor a 0.")
             return 
         seleccionado = elemento.focus()
+        if seleccionado == "":
+            MessageBox.showerror("Error", "debe de seleccionar una línea de la tabla de tarifas.")
+            return 
         clave = elemento.item(seleccionado, "text")
         valor = elemento.item(seleccionado, "values")
 
@@ -179,14 +230,14 @@ un entero entre 1 y 12")
     tarifas_tv.heading("#0", text="VEHÍCULOS", anchor=CENTER)
     tarifas_tv.heading("col1", text="TARIFA", anchor=CENTER)
 
-    tarifas_tv.insert("", END, text="Automóvil particular y vehículo de carga liviana (menor o igual a 3500 kg)", values="10920")
-    tarifas_tv.insert("", END, text="Automóvil particular y vehículo de carga liviana (mayor a 3500 kg pero menor a 8000 kg)", values="14380")
-    tarifas_tv.insert("", END, text="Vehículo de carga pesada y cabezales (mayor o igual a 8000 kg)", values="14380")
-    tarifas_tv.insert("", END, text="Taxis", values="11785")
-    tarifas_tv.insert("", END, text="Autobuses, buses y microbuses", values="14380")
-    tarifas_tv.insert("", END, text="Motocicletas", values="7195")
-    tarifas_tv.insert("", END, text="Equipo especial de obras", values="14380")
-    tarifas_tv.insert("", END, text="Equipo especial agrícola (maquinaria agrícola)", values="6625")
+    tarifas_tv.insert("", END, text="Automóvil particular y vehículo de carga liviana (menor o igual a 3500 kg)", values=str(tarifas[0]))
+    tarifas_tv.insert("", END, text="Automóvil particular y vehículo de carga liviana (mayor a 3500 kg pero menor a 8000 kg)", values=str(tarifas[1]))
+    tarifas_tv.insert("", END, text="Vehículo de carga pesada y cabezales (mayor o igual a 8000 kg)", values=str(tarifas[2]))
+    tarifas_tv.insert("", END, text="Taxis", values=str(tarifas[3]))
+    tarifas_tv.insert("", END, text="Autobuses, buses y microbuses", values=str(tarifas[4]))
+    tarifas_tv.insert("", END, text="Motocicletas", values=str(tarifas[5]))
+    tarifas_tv.insert("", END, text="Equipo especial de obras", values=str(tarifas[6]))
+    tarifas_tv.insert("", END, text="Equipo especial agrícola (maquinaria agrícola)", values=str(tarifas[7]))
 
     tarifas_tv.place(x=50, y=550)
 
@@ -203,10 +254,12 @@ un entero entre 1 y 12")
     tarifa_nueva_etiqueta.place(x=700, y=595)
 
     #Botones guardar configuración y volver atrás
-    guardar_config_boton = Button(configuracion_sistema_ventana, text="Guardar configuración", font="Helvetica 10 bold", bg="#08f26e", width=22, height=4, command=lambda: validar_entradas())
-    volver_atras_boton = Button(configuracion_sistema_ventana, text="Volver atrás", font="Helvetica 10 bold", bg="#ff3333", width=22, height=4, command=lambda: configuracion_sistema_ventana.destroy())     
+    guardar_config_boton = Button(configuracion_sistema_ventana, text="Guardar configuración", font="Helvetica 10 bold", bg="#08f26e", width=22, height=4, command=lambda: guardar_informacion())
+    volver_atras_boton = Button(configuracion_sistema_ventana, text="Volver atrás", font="Helvetica 10 bold", bg="#ff3333", width=22, height=4, command=lambda: limpiar_entradas())     
     guardar_config_boton.place(x=200, y=800)
     volver_atras_boton.place(x=500, y=800)
+
+    
 
 
     configuracion_sistema_ventana.mainloop()
@@ -277,28 +330,37 @@ def programar_citas ():
         return True
     
     def generar_horas (): #Generar los valores de las horas dependiendo y teniendo en cuenta la configuración default
-        global cantidad_de_horas_mostrar
-        hora_inicial_fija = 6
-        hora_final_fija = 21
-        minutos_cada_cita_fija = 20
-        meses_considerados_automatico_fija = 3
         hora_actual = datetime.now ()
 
         #Lista de las horas a mostrar:
-        
-        hora_actual_mod = hora_actual
-        mes_termino = hora_actual.month + meses_considerados_automatico_fija
-        anio_termino = hora_actual.year + (mes_termino > 12)
-        if mes_termino % 12 != 0:
-            mes_termino = mes_termino % 12
+        if bandera_entro_configuracion == True:
+            hora_actual_mod = hora_actual
+            mes_termino = hora_actual.month + int (meses_considerados_automatico_entry.get())
+            anio_termino = hora_actual.year + (mes_termino > 12)
+            if mes_termino % 12 != 0:
+                mes_termino = mes_termino % 12
+            else:
+                mes_termino = 12
+            hora_termino_mod = datetime(anio_termino, mes_termino, hora_actual.day, hora_final_entry.get())
+            while hora_actual_mod <= hora_termino_mod:
+                if int (hora_inicial_entry.get ()) <= hora_actual_mod.hour < int (hora_final_entry.get ()):
+                    cantidad_de_horas_mostrar.append(hora_actual_mod.strftime("%d/%m/%Y %I:%M %p"))
+                    
+                hora_actual_mod += timedelta(minutes=minutos_cada_cita_entry.get ())
         else:
-            mes_termino = 12
-        hora_termino_mod = datetime(anio_termino, mes_termino, hora_actual.day, hora_final_fija)
-        while hora_actual_mod <= hora_termino_mod:
-            if hora_inicial_fija <= hora_actual_mod.hour < hora_final_fija:
-                cantidad_de_horas_mostrar.append(hora_actual_mod.strftime("%d/%m/%Y %I:%M %p"))
-                
-            hora_actual_mod += timedelta(minutes=minutos_cada_cita_fija)
+            hora_actual_mod = hora_actual
+            mes_termino = hora_actual.month + int (meses_considerados_automatico_fija)
+            anio_termino = hora_actual.year + (mes_termino > 12)
+            if mes_termino % 12 != 0:
+                mes_termino = mes_termino % 12
+            else:
+                mes_termino = 12
+            hora_termino_mod = datetime(anio_termino, mes_termino, hora_actual.day, hora_final_fija)
+            while hora_actual_mod <= hora_termino_mod:
+                if int (hora_inicial_fija) <= hora_actual_mod.hour < int (hora_final_fija):
+                    cantidad_de_horas_mostrar.append(hora_actual_mod.strftime("%d/%m/%Y %I:%M %p"))
+                    
+                hora_actual_mod += timedelta(minutes=minutos_cada_cita_fija)
             
 
     def mostrar_manual (): #Mostrar ventana al seleccionar la opcion de manual
@@ -503,7 +565,7 @@ def programar_citas ():
 
     #Número de placa elementos
     numero_placa_label = tk.Label (ventana_programar_citas, text= "Número de placa:", font = "Helvetica 14 bold")
-    numero_placa_entry = tk.Entry (ventana_programar_citas, textvariable = numero_placa, width = 15, font = "Helvetica 12")
+    numero_placa_entry = tk.Entry (ventana_programar_citas, textvariable = numero_placa_cancelar, width = 15, font = "Helvetica 12")
     numero_placa_label.place (x = 220, y = 260)
     numero_placa_entry.place (x = 220, y = 300)
 
@@ -569,7 +631,35 @@ def programar_citas ():
     boton_cancelar = tk.Button (ventana_programar_citas, text = "Cancelar asignación de cita", font = "Helvetica 10 bold", bg = "#ff3333", height = 3, command = lambda: ventana_programar_citas.destroy () )
     boton_cancelar.place (x = 450, y = 650)
 
-    
+def cancelar_citas ():
+    def accion_cancelar ():
+        pass
+    ventana_cancelar_citas = tk.Toplevel ()
+    ventana_cancelar_citas.geometry ("600x350")
+
+    #Elementos de Bienvenida
+    label_principal_cancelar_citas = tk.Label (ventana_cancelar_citas, text = "Cancelar cita", font = "Helvetica 20 bold")
+    label_principal_cancelar_citas.place (x= 200, y = 40)
+    instruccion_cancelar_citas = tk.Label (ventana_cancelar_citas, text = "Ingrese en los campos en blanco sus datos correspondientes", font = "Helvetica 13")
+    instruccion_cancelar_citas.place (x= 75, y = 85)
+
+    #Elementos de la cita
+    numero_cita_label_cancelar = tk.Label (ventana_cancelar_citas, text = "Número de cita:", font = "Helvetica 14 bold")
+    numero_cita_label_cancelar.place (x = 70, y = 140)
+    numero_placa_label_cancelar = tk.Label (ventana_cancelar_citas, text = "Número de placa:", font = "Helvetica 14 bold")
+    numero_placa_label_cancelar.place (x = 360, y = 140)
+    numero_cita_entry_cancelar = tk.Entry (ventana_cancelar_citas, textvariable = contador_citas_cancelar, font = "Helvetica 12", width = 16, justify = "center")
+    numero_cita_entry_cancelar.place (x = 75, y = 190)
+    numero_placa_entry_cancelar = tk.Entry (ventana_cancelar_citas, textvariable = numero_placa_cancelar, font = "Helvetica 12", width = 18, justify = "center")
+    numero_placa_entry_cancelar.place (x = 360, y = 190)
+
+    boton_cancelar_cita = tk.Button (ventana_cancelar_citas, text = "Cancelar cita", font = "Helvetica 10 bold" , width = 23, height = 3, bg = "#08f26e")
+    boton_cancelar_cita.place (x = 195, y = 260)
+
+
+
+
+
 
 def acerca_de():
     MessageBox.showinfo("Acerca de", "Programa ReTeVe\nVersión del programa 1.0\
@@ -614,7 +704,10 @@ boton_tablero.place (x= 300, y = 330)
 
 #Funciones del programa
 contador_citas = 1
+bandera_entro_configuracion = False
 cantidad_de_horas_mostrar = []
+numero_placa_cancelar = tk.StringVar ()
+contador_citas_cancelar = tk.StringVar ()
 numero_placa = tk.StringVar ()
 marca_vehiculo = tk.StringVar ()
 modelo = tk.StringVar ()
@@ -632,6 +725,7 @@ fallas_graves_para_no_circular = StringVar()
 meses_considerados_automatico = StringVar()
 porcentaje_IVA= StringVar()
 tarifa_modificada = StringVar()
+
 """particular_menor_igual_3500 = 
 particular_entre_3500_y_8000 = 
 carga_pesada_mayor_igual_8000= 
@@ -651,6 +745,7 @@ cant_max_dias_reinspeccion_fija = 30
 fallas_graves_para_no_circular_fija = 4 
 meses_considerados_automatico_fija = 1
 porcentaje_IVA_fija = 13.0
+
 particular_menor_igual_3500_fija = 10920
 particular_entre_3500_y_8000_fija = 14380
 carga_pesada_mayor_igual_8000_fija= 14380
@@ -660,11 +755,11 @@ motos_fija = 7195
 equipo_obras_fija = 14380
 equipo_agricola_fija = 6625
 
-
-
-
+tarifas = [particular_menor_igual_3500_fija, particular_entre_3500_y_8000_fija, carga_pesada_mayor_igual_8000_fija,
+           taxis_fija, buses_fija, motos_fija, equipo_obras_fija, equipo_agricola_fija]
 
 lista_vehiculos = ["Automóvil particular y vehículo de carga liviana (<3500kg)", "Automóvil particular y vehículo de carga liviana (3500kg - 8000kg)", "Vehículo de carga pesada y cabezales (8000kg -)", "Taxis", "Busetas", "Motocicletas", "Equipo especial de obras", "Equipo especial de agrícola"]
+
 
 
 ventana_principal.mainloop ()
