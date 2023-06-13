@@ -525,9 +525,9 @@ def programar_citas ():
                 direccion_fisica_f = direccion_fisica_entry.get ()
                 estado_f = "PENDIENTE"
                 if var_automatico.get () == True:
-                    final = [tipo_cita_f, numero_placa_f, tipo_de_vehiculo_f, marca_del_vehiculo_f, modelo_f, propetario_f, telefono_f, correo_f, direccion_fisica_f, valor_seleccionado_automatico, estado_f]
+                    final = [contador_citas, tipo_cita_f, numero_placa_f, tipo_de_vehiculo_f, marca_del_vehiculo_f, modelo_f, propetario_f, telefono_f, correo_f, direccion_fisica_f, valor_seleccionado_automatico, estado_f]
                 elif var_manual.get () == True:
-                    final = [tipo_cita_f, numero_placa_f, tipo_de_vehiculo_f, marca_del_vehiculo_f, modelo_f, propetario_f, telefono_f, correo_f, direccion_fisica_f, valor_seleccionado_manual, estado_f]
+                    final = [contador_citas, tipo_cita_f, numero_placa_f, tipo_de_vehiculo_f, marca_del_vehiculo_f, modelo_f, propetario_f, telefono_f, correo_f, direccion_fisica_f, valor_seleccionado_manual, estado_f]
                 print (final)
             
             else:
@@ -684,8 +684,24 @@ def programar_citas ():
     boton_cancelar.place (x = 450, y = 650)
 
 def cancelar_citas ():
-    def accion_cancelar ():
-        pass
+    def modificar_estado_cita_cancelada (citas, numero_cita, numero_placa):
+        if numero_cita == "" or numero_placa == "":
+            MessageBox.showerror ("Error", "Porfavor llene todos los campos solicitados")
+            return
+        return modificar_estado_cita_cancelada_aux (citas, numero_cita, numero_placa)
+
+    def modificar_estado_cita_cancelada_aux (citas, numero_cita, numero_placa):
+        if citas == []:
+         return []
+    
+        elif isinstance (citas [0], list):
+            if not ((citas [0]) == []) and citas [0] [0] == numero_cita and citas [0] [-1] == "PENDIENTE" and numero_placa == citas [0] [2]:
+                citas [0] [-1] = "CANCELADA"
+            return [modificar_estado_cita_cancelada_aux (citas [0], numero_cita, numero_placa)] + modificar_estado_cita_cancelada_aux (citas [1:], numero_cita, numero_placa)
+
+        else:
+            return [citas [0]] + modificar_estado_cita_cancelada_aux (citas [1:], numero_cita, numero_placa)
+    print (citas)
     ventana_cancelar_citas = tk.Toplevel ()
     ventana_cancelar_citas.geometry ("600x350")
 
@@ -705,7 +721,7 @@ def cancelar_citas ():
     numero_placa_entry_cancelar = tk.Entry (ventana_cancelar_citas, textvariable = numero_placa_cancelar, font = "Helvetica 12", width = 18, justify = "center")
     numero_placa_entry_cancelar.place (x = 360, y = 190)
 
-    boton_cancelar_cita = tk.Button (ventana_cancelar_citas, text = "Cancelar cita", font = "Helvetica 10 bold" , width = 23, height = 3, bg = "#08f26e")
+    boton_cancelar_cita = tk.Button (ventana_cancelar_citas, text = "Cancelar cita", font = "Helvetica 10 bold" , width = 23, height = 3, bg = "#08f26e", command = lambda: modificar_estado_cita_cancelada (citas, numero_cita_entry_cancelar.get (), numero_placa_entry_cancelar.get ()) )
     boton_cancelar_cita.place (x = 195, y = 260)
 
 
@@ -758,8 +774,10 @@ boton_tablero.place (x= 300, y = 330)
 contador_citas = 1
 bandera_entro_configuracion = False
 cantidad_de_horas_mostrar = []
-cantidad_de_horas_mostrar = []
-arbol_citas = [ ]
+
+citas = [[1, 'Primera vez', 'BNS-150', 'Automóvil particular y vehículo de carga liviana (<3500kg)', 'Toyota', 'Forturner 4x4', 'Miguel Francisco Gonzalez', '01234567890123456789', 'josemiguel4484@gmail.com', 'Belén, Heredia', '09/06/2023 06:25 PM', 'PENDIENTE'], [], 
+            [[2, 'Primera vez', 'BNS-150', 'Automóvil particular y vehículo de carga liviana (<3500kg)', 'Toyota', 'Forturner 4x4', 'Miguel Francisco Gonzalez', '01234567890123456789', 'josemiguel4484@gmail.com', 'Belén, Heredia', '09/06/2023 06:25 PM', 'PENDIENTE'], [], []]]
+
 valor_seleccionado_manual = None
 valor_seleccionado_automatico = None
 numero_placa_cancelar = tk.StringVar ()
