@@ -17,14 +17,6 @@ from email.mime.base import MIMEBase
 from email.mime.application import MIMEApplication
 
 #Funciones
-"""cant_lineas_trabajo_fija = cant_lineas_trabajo.get()
-            hora_inicial_fija = hora_inicial.get()
-            hora_final_fija = hora_final.get()
-            minutos_cada_cita_fija = minutos_cada_cita.get()
-            cant_max_dias_reinspeccion_fija = cant_max_dias_reinspeccion.get()
-            fallas_graves_para_no_circular_fija = fallas_graves_para_no_circular.get()
-            meses_considerados_automatico_fija = meses_considerados_automatico.get()
-            porcentaje_IVA_fija = porcentaje_IVA.get()"""
 
 def configuracion_sistema():
     global lineas_trabajo_entry, hora_inicial_entry, hora_final_entry, minutos_cada_cita_entry, cantidad_max_dias_resinspeccion_entry, fallas_graves_para_no_circular_entry, meses_considerados_automatico_entry, porcentaje_IVA_entry
@@ -547,7 +539,6 @@ def programar_citas ():
     
     def agregar_cita_aux(nodo, cita):
         if len(nodo) == 2:
-            hoja = [cita]
             return nodo + [[cita, []]]
         else:
             return nodo[:2] + [agregar_cita_aux(nodo[-1], cita)]
@@ -825,15 +816,6 @@ fallas_graves_para_no_circular = StringVar()
 meses_considerados_automatico = StringVar()
 porcentaje_IVA= StringVar()
 tarifa_modificada = StringVar()
-
-"""particular_menor_igual_3500 = 
-particular_entre_3500_y_8000 = 
-carga_pesada_mayor_igual_8000= 
-taxis = 
-buses = 
-motos = 
-equipo_obras = 
-equipo_agricola = """
 
 
 #Variables fijas de la configuración
