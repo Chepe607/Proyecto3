@@ -537,32 +537,36 @@ def programar_citas ():
             return
 
     def validar_reinspeccion_mismo_dia(nodo, fecha, hora, placa, estado):
-        if nodo[0][-2][0:10] == fecha and nodo[0][2] == placa and nodo[0][1] == "Primera vez" and estado == "Reinspeccion":
-            if nodo[0][-2][17:19] == "AM" and hora[6:8] == "PM":
-                return True
-            elif nodo[0][-2][17:19] == "PM" and hora[6:8] == "AM":
-                return False
-            elif nodo[0][-2][17:19] == hora[6:8]:
-                if nodo[0][-2][11:16] < hora[:5]:
+        if nodo[0][-2][0:10] == fecha and nodo[0][2] == placa and nodo[0][1] == "Primera vez":
+            if estado == "Reinspección":
+                if nodo[0][-2][17:19] == "AM" and hora[6:8] == "PM":
                     return True
-                else:
+                elif nodo[0][-2][17:19] == "PM" and hora[6:8] == "AM":
                     return False
+                elif nodo[0][-2][17:19] == hora[6:8]:
+                    if nodo[0][-2][11:16] < hora[:5]:
+                        return True
+                    else:
+                        return False
+            
+            else:
+                return False
 
         elif len(nodo) == 2:
-            return False
+            return True
         else:
             return validar_reinspeccion_mismo_dia(nodo[2], fecha, hora, placa, estado)        
     
-    def agregar_cita(citas, cita):
-        if citas == []:
+    def agregar_cita(citas_arbol, cita):
+        if citas_arbol == []:
             nodo = [cita]
             hijo_izquierdo = [[]]
             return nodo + hijo_izquierdo
-        elif validar_reinspeccion_mismo_dia(citas, cita[-2][0:10], cita[-2][11:], cita[2], cita[1]) == True:
-            return agregar_cita_aux(citas, cita)
+        elif validar_reinspeccion_mismo_dia(citas_arbol, cita[-2][0:10], cita[-2][11:], cita[2], cita[1]) == True:
+            return agregar_cita_aux(citas_arbol, cita)
         
         else: 
-            return citas
+            return citas_arbol
     
     def agregar_cita_aux(nodo, cita):
         if len(nodo) == 2:
