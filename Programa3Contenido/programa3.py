@@ -2,6 +2,8 @@
 #Realizado por Emmanuel Rodríguez y José Miguel González Barrantes
 """Información importante"""
 
+print("Prueba")
+
 #Módulos
 from tkinter import ttk
 import tkinter as tk
@@ -534,14 +536,34 @@ def programar_citas ():
         else:
             MessageBox.showerror ("Error", "La información ingresada en los campos en blanco no son validos")
             return
-            
+
+    def validar_reinspeccion_mismo_dia(nodo, fecha, hora, placa, estado):
+        if nodo[0][-2][0:10] == fecha and nodo[0][2] == placa and nodo[0][1] == "Primera vez" and estado == "Reinspeccion":
+            if nodo[0][-2][17:19] == "AM" and hora[6:8] == "PM":
+                return True
+            elif nodo[0][-2][17:19] == "PM" and hora[6:8] == "AM":
+                return False
+            elif nodo[0][-2][17:19] == hora[6:8]:
+                if nodo[0][-2][11:16] < hora[:5]:
+                    return True
+                else:
+                    return False
+
+        elif len(nodo) == 2:
+            return False
+        else:
+            return validar_reinspeccion_mismo_dia(nodo[2], fecha, hora, placa, estado)        
+    
     def agregar_cita(citas, cita):
         if citas == []:
             nodo = [cita]
             hijo_izquierdo = [[]]
             return nodo + hijo_izquierdo
-        else:
+        elif validar_reinspeccion_mismo_dia(citas, cita[-2][0:10], cita[-2][11:], cita[2], cita[1]) == True:
             return agregar_cita_aux(citas, cita)
+        
+        else: 
+            return citas
     
     def agregar_cita_aux(nodo, cita):
         if len(nodo) == 2:
