@@ -389,6 +389,7 @@ def programar_citas ():
             if validacion == True:
                 print ("Pasa #1", fecha_seleccionada, hora_seleccionada)
                 valor_seleccionado_manual = str (fecha_seleccionada) + " " + str (hora_seleccionada)
+                ventana_manual.destroy ()
                 return valor_seleccionado_manual, hora_seleccionada
             else:
                 MessageBox.showerror ("Error", "Hora indicada es inválida")
@@ -419,8 +420,8 @@ def programar_citas ():
             hora_entry = tk.Entry (ventana_manual, textvariable = hora_seleccionada, font = "Helvetica 12", width = 25, justify = "center")
             hora_entry.place (x= 390, y = 200 )
 
-            boton_confirmacion_manual = tk.Button (ventana_manual, text = "Confirmar cita", font = "Helvetica 12 bold", width = 15, height = 3, bg= "#08f26e", command = lambda: boton_confirmacion ())
-            boton_confirmacion_manual.place (x = 250, y = 420)
+            boton_confirmacion_manual = tk.Button (ventana_manual, text = "Confirmar fecha y hora", font = "Helvetica 12 bold", width = 20, height = 3, bg= "#08f26e", command = lambda: boton_confirmacion ())
+            boton_confirmacion_manual.place (x = 210, y = 420)
 
             
 
@@ -429,7 +430,7 @@ def programar_citas ():
 
 
     def mostrar_automatico (): #Mostrar ventana al seleccionar la opcion de automático
-        global valor_seleccionado_automatico
+        global valor_seleccionado_automatico, cantidad_de_horas_mostrar
         MessageBox.showinfo ("Información a considerar", "A la hora de realizar la escogencia de la fecha y hora, no cierre esta ventana hasta que guarde la cita correspondiente")
         valor_actual_automatico = var_automatico.get ()
 
@@ -439,6 +440,7 @@ def programar_citas ():
             valor_seleccionado_automatico = fecha_listbox.get (indice_valor_seleccionado)
             ####FALTA VALORAR LA DISPONIBILIDAD DE LAS CITAS
             print (valor_seleccionado_automatico)
+            ventana_automatico.destroy ()
 
         if valor_actual_automatico == True:
             manual.config (state = "disable")
@@ -462,8 +464,9 @@ def programar_citas ():
             automatico_instruccion = tk.Label (ventana_automatico, text = "Seleccione de la lista la fecha y hora de la cita", font = "Helvetica 10")
             automatico_instruccion.place (x = 15, y = 55)
 
-            boton_confirmacion = tk.Button (ventana_automatico, text = "Confirmar cita", font = "Helvetica 10 bold", bg = "#08f26e", command = lambda: guardar_fecha_automatico ())
+            boton_confirmacion = tk.Button (ventana_automatico, text = "Confirmar fecha y hora", font = "Helvetica 10 bold", bg = "#08f26e", command = lambda: guardar_fecha_automatico ())
             boton_confirmacion.place (x = 90, y = 260)
+            cantidad_de_horas_mostrar = [ ]
 
         else:
             manual.config (state = "normal")
@@ -493,6 +496,7 @@ def programar_citas ():
             tipo_cita_primera_vez.config (state = "normal")
 
     def guardar_cita (): #Guardar valores de las citas
+        global citas, contador_citas
         validacion = validar_entries ()
         if validacion == True:
             validacion2 = validar_fechas_horas ()
@@ -500,7 +504,7 @@ def programar_citas ():
 
                 mandar_correo (correo_entry.get())
                 tipo_cita_primera_vez_f = var_primera_vez.get ()
-                tipo_cita_reinspeccion_f = var_manual.get ()
+                tipo_cita_reinspeccion_f = var_reinspeccion.get ()
 
                 if tipo_cita_primera_vez_f == True:
                     tipo_cita_f = "Primera vez"
@@ -516,12 +520,14 @@ def programar_citas ():
                 correo_f = correo_entry.get ()
                 direccion_fisica_f = direccion_fisica_entry.get ()
                 estado_f = "PENDIENTE"
+                contador_citas = contador_citas + 1
                 if var_automatico.get () == True:
                     final = [contador_citas, tipo_cita_f, numero_placa_f, tipo_de_vehiculo_f, marca_del_vehiculo_f, modelo_f, propetario_f, telefono_f, correo_f, direccion_fisica_f, valor_seleccionado_automatico, estado_f]
                 elif var_manual.get () == True:
                     final = [contador_citas, tipo_cita_f, numero_placa_f, tipo_de_vehiculo_f, marca_del_vehiculo_f, modelo_f, propetario_f, telefono_f, correo_f, direccion_fisica_f, valor_seleccionado_manual, estado_f]
-                print (agregar_cita (citas, final))
-            
+                citas = agregar_cita (citas, final)
+                print (citas)
+                MessageBox.showinfo ("Agregar cita", "¡Se ha guardado su cita de manera correcta!")
             else:
                 MessageBox.showerror ("Error", "Las fechas u horas son inválidas o no se ingreso ningúna")
                 return
@@ -741,6 +747,134 @@ def cancelar_citas ():
     boton_cancelar_cita = tk.Button (ventana_cancelar_citas, text = "Cancelar cita", font = "Helvetica 10 bold" , width = 23, height = 3, bg = "#08f26e", command = lambda: modificar_estado_cita_cancelada (citas, numero_cita_entry_cancelar.get (), numero_placa_entry_cancelar.get ()))
     boton_cancelar_cita.place (x = 195, y = 260)
 
+def ingresar_citas ():
+    global info_cita
+    def tomar_cita (citas, numero_cita, numero_placa):
+        global info_cita
+        info_cita = None
+        numero_cita = eval (numero_cita)
+        numero_placa = str (numero_placa)
+        if numero_cita == "" or numero_placa == "":
+            MessageBox.showerror ("Error", "Porfavor llene todos los campos solicitados")
+            return
+        
+        return tomar_cita_aux (citas, numero_cita, numero_placa)
+
+        
+    def tomar_cita_aux (citas, numero_cita, numero_placa):
+        global info_cita
+        if citas == []:
+            return []
+    
+        elif isinstance (citas [0], list):
+            if not ((citas [0]) == []) and numero_cita == citas [0] [0] and citas [0] [-1] == "PENDIENTE" and numero_placa == citas [0] [2]:
+                info_cita = citas [0]
+            return [tomar_cita_aux (citas [0], numero_cita, numero_placa)] + tomar_cita_aux (citas [1:], numero_cita, numero_placa)
+
+        else:
+            return [citas [0]] + tomar_cita_aux (citas [1:], numero_cita, numero_placa)
+        
+    def mostrar_datos (citas, numero_cita_ingresar, numero_placa_ingresar):
+        global info_cita 
+        tomar_cita (citas, numero_cita_ingresar, numero_placa_ingresar)
+
+        if info_cita == None:
+            MessageBox.showerror ("Error", "Los datos ingresados no concuerdan con las citas existentes.")
+            return
+        
+        else:
+            info_vehiculo_label = tk.Label (ventana_ingresar_citas, text = "Información general del vehículo:", font = "Helvetica 12 bold")
+            info_vehiculo_label.place (x = 175, y = 340)
+            print (info_cita)
+            tipo_vehiculo_ingresar = info_cita [3]
+
+            marca_ingresar = info_cita [4]
+            marca_label = tk.Label (ventana_ingresar_citas, text = marca_ingresar, font = "Helvetica 11")
+            marca_label.place (x= 245, y = 380)
+
+            modelo_ingresar = info_cita [5]
+            modelo_label = tk.Label (ventana_ingresar_citas, text = modelo_ingresar, font = "Helvetica 11")
+            modelo_label.place (x= 245, y = 420)
+
+            propetario_ingresar = info_cita [6]
+            propetario_label = tk.Label (ventana_ingresar_citas, text = propetario_ingresar, font = "Helvetica 11")
+            propetario_label.place (x = 245, y = 460)
+
+            precio_pagar_label = tk.Label (ventana_ingresar_citas, text = "Tarifa neta a pagar:", font = "Helvetica 12 bold")
+            precio_pagar_label.place (x= 210, y = 500)
+
+            if tipo_vehiculo_ingresar == "Automóvil particular y vehículo de carga liviana (<3500kg)":
+                tarifa_tipo = particular_menor_igual_3500_fija
+                sumar = particular_menor_igual_3500_fija * (porcentaje_IVA_fija/100)
+                tarifa_neta = tarifa_tipo + sumar
+
+            elif tipo_vehiculo_ingresar == "Automóvil particular y vehículo de carga liviana (3500kg - 8000kg)":
+                tarifa_tipo = particular_entre_3500_y_8000_fija
+                sumar = particular_entre_3500_y_8000_fija * (porcentaje_IVA_fija/100)
+                tarifa_neta = tarifa_tipo + sumar
+
+            elif tipo_vehiculo_ingresar == "Vehículo de carga pesada y cabezales (8000kg -)":
+                tarifa_tipo = carga_pesada_mayor_igual_8000_fija
+                sumar = carga_pesada_mayor_igual_8000_fija * (porcentaje_IVA_fija/100)
+                tarifa_neta = tarifa_tipo + sumar
+
+            elif tipo_vehiculo_ingresar == "Taxis":
+                tarifa_tipo = taxis_fija
+                sumar = taxis_fija * (porcentaje_IVA_fija/100)
+                tarifa_neta = tarifa_tipo + sumar
+
+            elif tipo_vehiculo_ingresar == "Busetas":
+                tarifa_tipo = buses_fija
+                sumar = buses_fija * (porcentaje_IVA_fija/100)
+                tarifa_neta = tarifa_tipo + sumar
+
+            elif tipo_vehiculo_ingresar == "Motocicletas":
+                tarifa_tipo = motos_fija
+                sumar = motos_fija * (porcentaje_IVA_fija/100)
+                tarifa_neta = tarifa_tipo + sumar
+
+            elif tipo_vehiculo_ingresar == "Equipo especial de obras":
+                tarifa_tipo = equipo_obras_fija
+                sumar = equipo_obras_fija * (porcentaje_IVA_fija/100)
+                tarifa_neta = tarifa_tipo + sumar
+
+            elif tipo_vehiculo_ingresar == "Equipo especial de agrícola":
+                tarifa_tipo = equipo_agricola_fija
+                sumar = equipo_agricola_fija * (porcentaje_IVA_fija/100)
+                tarifa_neta = tarifa_tipo + sumar
+            
+            precio_pagar_info = tk.Label (ventana_ingresar_citas, text = tarifa_neta, font = "Helvetica 11")
+            precio_pagar_info.place (x= 245, y = 540)
+
+
+
+
+    #Ventana como tal
+    ventana_ingresar_citas = tk.Toplevel ()
+    ventana_ingresar_citas.geometry ("600x750")
+    ventana_ingresar_citas.title ("Ingresar citas")
+
+    #Elementos propios de la ventana
+    ingresar_citas_label_titulo = tk.Label (ventana_ingresar_citas, text = "Ingresar citas", font = "Helvetica 20 bold")
+    ingresar_citas_label_titulo.place (x= 200, y = 40)
+
+    ingresar_citas_label_instrucciones = tk.Label (ventana_ingresar_citas, text = "Ingrese los datos correspondientes en los campos en blanco.", font = "Helvetica 13")
+    ingresar_citas_label_instrucciones.place (x= 75, y = 85)
+
+    ingresar_citas_label_numero_cita = tk.Label (ventana_ingresar_citas, text = "Número de cita:", font = "Helvetica 14 bold")
+    ingresar_citas_label_numero_cita.place (x = 70, y = 140)
+
+    ingresar_citas_label_numero_placa = tk.Label (ventana_ingresar_citas, text = "Número de placa:", font = "Helvetica 14 bold")
+    ingresar_citas_label_numero_placa.place (x= 360, y = 140)
+
+    ingresar_citas_entry_numero_cita = tk.Entry (ventana_ingresar_citas, textvariable = numero_cita_ingresar , font = "Helvetica 12", width = 16, justify = "center")
+    ingresar_citas_entry_numero_cita.place (x = 75, y = 190)
+
+    ingresar_citas_entry_numero_placa = tk.Entry (ventana_ingresar_citas, textvariable = numero_placa_ingresar, font = "Helvetica 12", width = 18, justify = "center")
+    ingresar_citas_entry_numero_placa.place (x= 360, y = 190)
+
+    boton_ingresar_cita = tk.Button (ventana_ingresar_citas, text = "Ingresar cita", font = "Helvetica 10 bold", width = 23, height = 3, bg = "#08f26e", command = lambda: mostrar_datos (citas, ingresar_citas_entry_numero_cita.get(), ingresar_citas_entry_numero_placa.get ()))
+    boton_ingresar_cita.place (x= 195, y = 250)
 
 
 
@@ -797,8 +931,11 @@ citas = [[1, 'Primera vez', 'BNS-150', 'Automóvil particular y vehículo de car
 
 valor_seleccionado_manual = None
 valor_seleccionado_automatico = None
+info_cita = None
 numero_placa_cancelar = tk.StringVar ()
 contador_citas_cancelar = tk.StringVar ()
+numero_placa_ingresar = tk.StringVar ()
+numero_cita_ingresar = tk.StringVar ()
 numero_placa = tk.StringVar ()
 marca_vehiculo = tk.StringVar ()
 modelo = tk.StringVar ()
