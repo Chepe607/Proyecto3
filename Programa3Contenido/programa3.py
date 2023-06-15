@@ -2,7 +2,6 @@
 #Realizado por Emmanuel Rodríguez y José Miguel González Barrantes
 """Información importante"""
 
-print("Prueba")
 
 #Módulos
 from tkinter import ttk
@@ -949,7 +948,7 @@ bandera_entro_configuracion = False
 cantidad_de_horas_mostrar = []
 
 citas = [[1, 'Primera vez', 'BNS-150', 'Automóvil particular y vehículo de carga liviana (<3500kg)', 'Toyota', 'Forturner 4x4', 'Miguel Francisco Gonzalez', '01234567890123456789', 'josemiguel4484@gmail.com', 'Belén, Heredia', '09/06/2023 06:25 PM', 'PENDIENTE'], [], 
-            [[2, 'Primera vez', 'BNS-150', 'Automóvil particular y vehículo de carga liviana (<3500kg)', 'Toyota', 'Forturner 4x4', 'Miguel Francisco Gonzalez', '01234567890123456789', 'josemiguel4484@gmail.com', 'Belén, Heredia', '09/06/2023 06:25 PM', 'PENDIENTE'], [], []]]
+            [[2, 'Primera vez', 'BNS-150', 'Automóvil particular y vehículo de carga liviana (<3500kg)', 'Toyota', 'Forturner 4x4', 'Miguel Francisco Gonzalez', '01234567890123456789', 'josemiguel4484@gmail.com', 'Belén, Heredia', '09/06/2023 06:25 PM', 'PENDIENTE'], []]]
 
 valor_seleccionado_manual = None
 valor_seleccionado_automatico = None
