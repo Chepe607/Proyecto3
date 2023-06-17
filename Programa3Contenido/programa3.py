@@ -261,7 +261,7 @@ def configuracion_sistema():
 
 
 def programar_citas ():
-    global cantidad_de_horas_mostrar
+    global cantidad_de_horas_mostrar, contador_citas
 
     def es_correo_valido(correo): #Validar que el correo electrónico sea válido
         testEmail = str(correo)
@@ -503,7 +503,7 @@ def programar_citas ():
             validacion2 = validar_fechas_horas ()
             if validacion2 == True:
 
-                mandar_correo (correo_entry.get())
+
                 tipo_cita_primera_vez_f = var_primera_vez.get ()
                 tipo_cita_reinspeccion_f = var_reinspeccion.get ()
 
@@ -521,10 +521,13 @@ def programar_citas ():
                 correo_f = correo_entry.get ()
                 direccion_fisica_f = direccion_fisica_entry.get ()
                 estado_f = "PENDIENTE"
-                contador_citas = contador_citas + 1
                 if var_automatico.get () == True:
+                    mandar_correo (correo_entry.get())
+                    contador_citas = contador_citas + 1 ####
                     final = [contador_citas, tipo_cita_f, numero_placa_f, tipo_de_vehiculo_f, marca_del_vehiculo_f, modelo_f, propetario_f, telefono_f, correo_f, direccion_fisica_f, valor_seleccionado_automatico, estado_f]
                 elif var_manual.get () == True:
+                    mandar_correo (correo_entry.get())
+                    contador_citas = contador_citas + 1 ####
                     final = [contador_citas, tipo_cita_f, numero_placa_f, tipo_de_vehiculo_f, marca_del_vehiculo_f, modelo_f, propetario_f, telefono_f, correo_f, direccion_fisica_f, valor_seleccionado_manual, estado_f]
                 citas = agregar_cita (citas, final)
                 print (citas)
@@ -565,7 +568,8 @@ def programar_citas ():
         elif validar_reinspeccion_mismo_dia(citas_arbol, cita[-2][0:10], cita[-2][11:], cita[2], cita[1]) == True:
             return agregar_cita_aux(citas_arbol, cita)
         
-        else: 
+        else:
+            MessageBox.showerror ("Error", "No se agregó la cita")
             return citas_arbol
     
     def agregar_cita_aux(nodo, cita):
@@ -720,7 +724,7 @@ def programar_citas ():
     boton_cancelar.place (x = 450, y = 650)
 
 def cancelar_citas ():
-    def modificar_estado_cita_cancelada (citas, numero_cita, numero_placa):
+    def modificar_estado_cita_cancelada (citas, numero_cita, numero_placa): #Funcion para modificar el estado de la cita (no recursiva)
         global bandera_encontrar
         bandera_encontrar = False
         numero_cita = eval (numero_cita)
@@ -736,7 +740,7 @@ def cancelar_citas ():
             MessageBox.showerror ("Error", "No se encontró la cita con los datos solicitados")
             return
         
-    def modificar_estado_cita_cancelada_aux (citas, numero_cita, numero_placa):
+    def modificar_estado_cita_cancelada_aux (citas, numero_cita, numero_placa): #Funcion para modificar el estado de la cita (recursiva)
         global bandera_encontrar
         if citas == []:
             return []
@@ -744,7 +748,7 @@ def cancelar_citas ():
         elif isinstance (citas [0], list):
             if not ((citas [0]) == []) and numero_cita == citas [0] [0] and citas [0] [-1] == "PENDIENTE" and numero_placa == citas [0] [2]:
                 citas [0] [-1] = "CANCELADA"
-                bandera_encontrar = True
+                bandera_encontrar = True #Encontró la cita
             return [modificar_estado_cita_cancelada_aux (citas [0], numero_cita, numero_placa)] + modificar_estado_cita_cancelada_aux (citas [1:], numero_cita, numero_placa)
 
         else:
@@ -774,7 +778,7 @@ def cancelar_citas ():
 
 def ingresar_citas ():
     global info_cita
-    def tomar_cita (citas, numero_cita, numero_placa):
+    def tomar_cita (citas, numero_cita, numero_placa): #Funcion para tomar la información de la cita que se ocupa (no recursiva)
         global info_cita
         info_cita = None
         numero_cita = eval (numero_cita)
@@ -786,7 +790,7 @@ def ingresar_citas ():
         return tomar_cita_aux (citas, numero_cita, numero_placa)
 
         
-    def tomar_cita_aux (citas, numero_cita, numero_placa):
+    def tomar_cita_aux (citas, numero_cita, numero_placa): #Funcion para tomar la información de la cita que se ocupa (recursiva)
         global info_cita
         if citas == []:
             return []
@@ -799,7 +803,7 @@ def ingresar_citas ():
         else:
             return [citas [0]] + tomar_cita_aux (citas [1:], numero_cita, numero_placa)
         
-    def mostrar_datos (citas, numero_cita_ingresar, numero_placa_ingresar):
+    def mostrar_datos (citas, numero_cita_ingresar, numero_placa_ingresar): #Mostrar los datos de la cita en el apartado de mostrar citas
         global info_cita 
         tomar_cita (citas, numero_cita_ingresar, numero_placa_ingresar)
 
@@ -808,68 +812,84 @@ def ingresar_citas ():
             return
         
         else:
-            info_vehiculo_label = tk.Label (ventana_ingresar_citas, text = "Información general del vehículo:", font = "Helvetica 12 bold")
-            info_vehiculo_label.place (x = 175, y = 340)
-            print (info_cita)
-            tipo_vehiculo_ingresar = info_cita [3]
+            formato = "%d/%m/%Y %I:%M %p"
+            fecha_hora_cita = info_cita [10]
+            fecha_hora_cita = datetime.strptime (fecha_hora_cita, formato)
 
-            marca_ingresar = info_cita [4]
-            marca_label = tk.Label (ventana_ingresar_citas, text = marca_ingresar, font = "Helvetica 11")
-            marca_label.place (x= 245, y = 380)
+            print (fecha_hora_cita)
 
-            modelo_ingresar = info_cita [5]
-            modelo_label = tk.Label (ventana_ingresar_citas, text = modelo_ingresar, font = "Helvetica 11")
-            modelo_label.place (x= 245, y = 420)
+            fecha_hora_actual = datetime.now ()
 
-            propetario_ingresar = info_cita [6]
-            propetario_label = tk.Label (ventana_ingresar_citas, text = propetario_ingresar, font = "Helvetica 11")
-            propetario_label.place (x = 245, y = 460)
+            hora_cita = int (fecha_hora_cita.hour)
+            hora_actual = int (fecha_hora_actual.hour)
 
-            precio_pagar_label = tk.Label (ventana_ingresar_citas, text = "Tarifa neta a pagar:", font = "Helvetica 12 bold")
-            precio_pagar_label.place (x= 210, y = 500)
+            if fecha_hora_cita.date () == fecha_hora_actual.date():
+                if fecha_hora_actual >= fecha_hora_cita - timedelta (hours = 1)  and fecha_hora_actual <= fecha_hora_cita:
+                    info_vehiculo_label = tk.Label (ventana_ingresar_citas, text = "Información general del vehículo:", font = "Helvetica 12 bold")
+                    info_vehiculo_label.place (x = 175, y = 340)
+                    print (info_cita)
+                    tipo_vehiculo_ingresar = info_cita [3]
 
-            if tipo_vehiculo_ingresar == "Automóvil particular y vehículo de carga liviana (<3500kg)":
-                tarifa_tipo = particular_menor_igual_3500_fija
-                sumar = particular_menor_igual_3500_fija * (porcentaje_IVA_fija/100)
-                tarifa_neta = tarifa_tipo + sumar
+                    marca_ingresar = info_cita [4]
+                    marca_label = tk.Label (ventana_ingresar_citas, text = marca_ingresar, font = "Helvetica 11")
+                    marca_label.place (x= 245, y = 380)
 
-            elif tipo_vehiculo_ingresar == "Automóvil particular y vehículo de carga liviana (3500kg - 8000kg)":
-                tarifa_tipo = particular_entre_3500_y_8000_fija
-                sumar = particular_entre_3500_y_8000_fija * (porcentaje_IVA_fija/100)
-                tarifa_neta = tarifa_tipo + sumar
+                    modelo_ingresar = info_cita [5]
+                    modelo_label = tk.Label (ventana_ingresar_citas, text = modelo_ingresar, font = "Helvetica 11")
+                    modelo_label.place (x= 245, y = 420)
 
-            elif tipo_vehiculo_ingresar == "Vehículo de carga pesada y cabezales (8000kg -)":
-                tarifa_tipo = carga_pesada_mayor_igual_8000_fija
-                sumar = carga_pesada_mayor_igual_8000_fija * (porcentaje_IVA_fija/100)
-                tarifa_neta = tarifa_tipo + sumar
+                    propetario_ingresar = info_cita [6]
+                    propetario_label = tk.Label (ventana_ingresar_citas, text = propetario_ingresar, font = "Helvetica 11")
+                    propetario_label.place (x = 245, y = 460)
 
-            elif tipo_vehiculo_ingresar == "Taxis":
-                tarifa_tipo = taxis_fija
-                sumar = taxis_fija * (porcentaje_IVA_fija/100)
-                tarifa_neta = tarifa_tipo + sumar
+                    precio_pagar_label = tk.Label (ventana_ingresar_citas, text = "Tarifa neta a pagar:", font = "Helvetica 12 bold")
+                    precio_pagar_label.place (x= 210, y = 500)
 
-            elif tipo_vehiculo_ingresar == "Busetas":
-                tarifa_tipo = buses_fija
-                sumar = buses_fija * (porcentaje_IVA_fija/100)
-                tarifa_neta = tarifa_tipo + sumar
+                    if tipo_vehiculo_ingresar == "Automóvil particular y vehículo de carga liviana (<3500kg)":
+                        tarifa_tipo = particular_menor_igual_3500_fija
+                        sumar = particular_menor_igual_3500_fija * (porcentaje_IVA_fija/100)
+                        tarifa_neta = tarifa_tipo + sumar
 
-            elif tipo_vehiculo_ingresar == "Motocicletas":
-                tarifa_tipo = motos_fija
-                sumar = motos_fija * (porcentaje_IVA_fija/100)
-                tarifa_neta = tarifa_tipo + sumar
+                    elif tipo_vehiculo_ingresar == "Automóvil particular y vehículo de carga liviana (3500kg - 8000kg)":
+                        tarifa_tipo = particular_entre_3500_y_8000_fija
+                        sumar = particular_entre_3500_y_8000_fija * (porcentaje_IVA_fija/100)
+                        tarifa_neta = tarifa_tipo + sumar
 
-            elif tipo_vehiculo_ingresar == "Equipo especial de obras":
-                tarifa_tipo = equipo_obras_fija
-                sumar = equipo_obras_fija * (porcentaje_IVA_fija/100)
-                tarifa_neta = tarifa_tipo + sumar
+                    elif tipo_vehiculo_ingresar == "Vehículo de carga pesada y cabezales (8000kg -)":
+                        tarifa_tipo = carga_pesada_mayor_igual_8000_fija
+                        sumar = carga_pesada_mayor_igual_8000_fija * (porcentaje_IVA_fija/100)
+                        tarifa_neta = tarifa_tipo + sumar
 
-            elif tipo_vehiculo_ingresar == "Equipo especial de agrícola":
-                tarifa_tipo = equipo_agricola_fija
-                sumar = equipo_agricola_fija * (porcentaje_IVA_fija/100)
-                tarifa_neta = tarifa_tipo + sumar
-            
-            precio_pagar_info = tk.Label (ventana_ingresar_citas, text = tarifa_neta, font = "Helvetica 11")
-            precio_pagar_info.place (x= 245, y = 540)
+                    elif tipo_vehiculo_ingresar == "Taxis":
+                        tarifa_tipo = taxis_fija
+                        sumar = taxis_fija * (porcentaje_IVA_fija/100)
+                        tarifa_neta = tarifa_tipo + sumar
+
+                    elif tipo_vehiculo_ingresar == "Busetas":
+                        tarifa_tipo = buses_fija
+                        sumar = buses_fija * (porcentaje_IVA_fija/100)
+                        tarifa_neta = tarifa_tipo + sumar
+
+                    elif tipo_vehiculo_ingresar == "Motocicletas":
+                        tarifa_tipo = motos_fija
+                        sumar = motos_fija * (porcentaje_IVA_fija/100)
+                        tarifa_neta = tarifa_tipo + sumar
+
+                    elif tipo_vehiculo_ingresar == "Equipo especial de obras":
+                        tarifa_tipo = equipo_obras_fija
+                        sumar = equipo_obras_fija * (porcentaje_IVA_fija/100)
+                        tarifa_neta = tarifa_tipo + sumar
+
+                    elif tipo_vehiculo_ingresar == "Equipo especial de agrícola":
+                        tarifa_tipo = equipo_agricola_fija
+                        sumar = equipo_agricola_fija * (porcentaje_IVA_fija/100)
+                        tarifa_neta = tarifa_tipo + sumar
+                    
+                    precio_pagar_info = tk.Label (ventana_ingresar_citas, text = tarifa_neta, font = "Helvetica 11")
+                    precio_pagar_info.place (x= 245, y = 540)
+                else:
+                    print ("Tarde")
+
 
 
 
@@ -947,12 +967,12 @@ boton_tablero = tk.Button (ventana_principal, text = "Tablero revisión",font = 
 boton_tablero.place (x= 300, y = 330)
 
 #Funciones del programa
-contador_citas = 1
+contador_citas = 2
 bandera_entro_configuracion = False
 cantidad_de_horas_mostrar = []
 
 citas = [[1, 'Primera vez', 'BNS-150', 'Automóvil particular y vehículo de carga liviana (<3500kg)', 'Toyota', 'Forturner 4x4', 'Miguel Francisco Gonzalez', '01234567890123456789', 'josemiguel4484@gmail.com', 'Belén, Heredia', '09/06/2023 06:25 PM', 'PENDIENTE'], [], 
-            [[2, 'Primera vez', 'BNS-150', 'Automóvil particular y vehículo de carga liviana (<3500kg)', 'Toyota', 'Forturner 4x4', 'Miguel Francisco Gonzalez', '01234567890123456789', 'josemiguel4484@gmail.com', 'Belén, Heredia', '09/06/2023 06:25 PM', 'PENDIENTE'], []]]
+            [[2, 'Primera vez', 'BNS-150', 'Automóvil particular y vehículo de carga liviana (<3500kg)', 'Toyota', 'Forturner 4x4', 'Miguel Francisco Gonzalez', '01234567890123456789', 'josemiguel4484@gmail.com', 'Belén, Heredia', '17/06/2023 09:30 AM', 'PENDIENTE'], []]]
 
 valor_seleccionado_manual = None
 valor_seleccionado_automatico = None
