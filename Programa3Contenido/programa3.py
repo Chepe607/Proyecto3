@@ -724,11 +724,60 @@ def programar_citas ():
     boton_cancelar.place (x = 450, y = 650)
 
 def cancelar_citas ():
+    global info_cita
+    def tomar_cita_cancelar (citas, numero_cita_cancelar, numero_placa_cancelar):
+        global info_cita
+        info_cita = None
+
+        numero_cita_cancelar = int (numero_cita_cancelar)
+        numero_placa_cancelar = str (numero_placa_cancelar)
+        if numero_cita_cancelar == "" or numero_placa_cancelar == "":
+            MessageBox.showerror ("Error", "Porfavor llene todos los campos solicitados")
+            return
+        
+        return tomar_cita_cancelar_aux (citas, numero_cita_cancelar, numero_placa_cancelar)
+
+        
+    def tomar_cita_cancelar_aux (citas, numero_cita, numero_placa): #Funcion para tomar la información de la cita que se ocupa (recursiva)
+        global info_cita
+        if citas == []:
+            return []
+    
+        elif isinstance (citas [0], list):
+            if not ((citas [0]) == []) and numero_cita == citas [0] [0] and citas [0] [-1] == "PENDIENTE" and numero_placa == citas [0] [2]:
+                info_cita = citas [0]
+            return [tomar_cita_cancelar_aux (citas [0], numero_cita, numero_placa)] + tomar_cita_cancelar_aux (citas [1:], numero_cita, numero_placa)
+
+        else:
+            return [citas [0]] + tomar_cita_cancelar_aux (citas [1:], numero_cita, numero_placa)
+        
     def modificar_estado_cita_cancelada (citas, numero_cita, numero_placa): #Funcion para modificar el estado de la cita (no recursiva)
-        global bandera_encontrar
+        global bandera_encontrar, colas_espera, colas_revision, info_cita
+        respuesta = tk.messagebox.askyesno ("Cancelar la cita?", "¿Está seguro de cancelar su cita?")
+        if respuesta == False:
+            return
         bandera_encontrar = False
+
         numero_cita = eval (numero_cita)
         numero_placa = str (numero_placa)
+
+        info_cita = tomar_cita_cancelar (citas, numero_cita, numero_placa)
+        print (info_cita)
+        print (info_cita [2])
+        respuesta_revision = validacion_existencia_placa_revision (info_cita [2]) #Validacion de existencia de la placa en la cola de revision
+        respuesta_espera = validacion_existencia_placa_espera (info_cita [2]) #Validacion de existencia de la placa en la cola de espera
+        print (respuesta_espera)
+        print (respuesta_revision)
+
+        if respuesta_revision == True: #Validacion de existencia en cola de revision
+            MessageBox.showerror ("Error", "No se puede borrar la cita porque esta en la cola de revisión")
+            return
+        
+        if respuesta_espera == True: #Validacion de existencia en cola de espera
+            for cola_espera in cola_espera:
+                if info_cita [2] in cola_espera:
+                    cola_espera.remove (info_cita [2])
+            print (cola_espera)
         if numero_cita == "" or numero_placa == "":
             MessageBox.showerror ("Error", "Porfavor llene todos los campos solicitados")
             return
@@ -738,6 +787,7 @@ def cancelar_citas ():
 
         if not bandera_encontrar:
             MessageBox.showerror ("Error", "No se encontró la cita con los datos solicitados")
+            print (citas)
             return
         
     def modificar_estado_cita_cancelada_aux (citas, numero_cita, numero_placa): #Funcion para modificar el estado de la cita (recursiva)
@@ -777,10 +827,11 @@ def cancelar_citas ():
     boton_cancelar_cita.place (x = 195, y = 260)
 
 def ingresar_citas ():
-    global info_cita
+    global info_cita, colas_espera, colas_revision, cant_lineas_trabajo_fija, crear_cola_espera, crear_cola_revision, tomar_cita
     def tomar_cita (citas, numero_cita, numero_placa): #Funcion para tomar la información de la cita que se ocupa (no recursiva)
         global info_cita
         info_cita = None
+
         numero_cita = eval (numero_cita)
         numero_placa = str (numero_placa)
         if numero_cita == "" or numero_placa == "":
@@ -802,13 +853,52 @@ def ingresar_citas ():
 
         else:
             return [citas [0]] + tomar_cita_aux (citas [1:], numero_cita, numero_placa)
+    
+
+    def validacion_existencia_placa_espera (placa): #Validacion para saber si la placa ya existe en la cola
+        global colas_espera
+        for cola in colas_espera:
+            if placa in cola:
+                return True
+        return False
+    
+    def validacion_existencia_placa_revision (placa):
+        global colas_revision
+        for cola in colas_revision:
+            if placa in cola:
+                return True
+        return False
+    
+    def agregar_placa_cola_espera (placa):
+        global colas_espera
+        lista_indices = []
+        lista_len_cada_cola = []
+        print (colas_espera)
+        #Sacamos el indice de la cola y el len de cada una de las colas
+        for indice_cola, cola_espera in enumerate(colas_espera):
+            lista_indices.append (indice_cola)
+            lista_len_cada_cola.append (len (cola_espera))
         
+        #Sacamos la info de la cola con menos vehiculos
+        minimo_len_cola = min (lista_len_cada_cola)
+        indice_minimo_cola = lista_len_cada_cola.index (minimo_len_cola)
+
+        #Se agrega la placa a la cola con menos vehiculos
+        for indice_cola2, cola_espera2 in enumerate (colas_espera):
+            if indice_minimo_cola == indice_cola2:
+                cola_espera2.append (placa)
+
+        print (colas_espera)
+
+
+
+
     def mostrar_datos (citas, numero_cita_ingresar, numero_placa_ingresar): #Mostrar los datos de la cita en el apartado de mostrar citas
         global info_cita 
         tomar_cita (citas, numero_cita_ingresar, numero_placa_ingresar)
 
         if info_cita == None:
-            MessageBox.showerror ("Error", "Los datos ingresados no concuerdan con las citas existentes.")
+            MessageBox.showerror ("Error", "Los datos ingresados no concuerdan con las citas existentes y/o no cumple con la condición de pendiente")
             return
         
         else:
@@ -825,70 +915,90 @@ def ingresar_citas ():
 
             if fecha_hora_cita.date () == fecha_hora_actual.date():
                 if fecha_hora_actual >= fecha_hora_cita - timedelta (hours = 1)  and fecha_hora_actual <= fecha_hora_cita:
-                    info_vehiculo_label = tk.Label (ventana_ingresar_citas, text = "Información general del vehículo:", font = "Helvetica 12 bold")
-                    info_vehiculo_label.place (x = 175, y = 340)
-                    print (info_cita)
-                    tipo_vehiculo_ingresar = info_cita [3]
+                    respuesta1 = validacion_existencia_placa_espera (info_cita [2])
+                    respuesta2 = validacion_existencia_placa_revision (info_cita[2])
+                    if respuesta1 == False and respuesta2 == False:
+                        if info_cita [-1] == "PENDIENTE":
+                            info_vehiculo_label = tk.Label (ventana_ingresar_citas, text = "Información general del vehículo:", font = "Helvetica 12 bold")
+                            info_vehiculo_label.place (x = 175, y = 340)
+                            print (info_cita)
+                            tipo_vehiculo_ingresar = info_cita [3]
 
-                    marca_ingresar = info_cita [4]
-                    marca_label = tk.Label (ventana_ingresar_citas, text = marca_ingresar, font = "Helvetica 11")
-                    marca_label.place (x= 245, y = 380)
+                            #Elementos a mostrar
+                            marca_ingresar = info_cita [4]
+                            marca_label = tk.Label (ventana_ingresar_citas, text = marca_ingresar, font = "Helvetica 11")
+                            marca_label.place (x= 245, y = 380)
 
-                    modelo_ingresar = info_cita [5]
-                    modelo_label = tk.Label (ventana_ingresar_citas, text = modelo_ingresar, font = "Helvetica 11")
-                    modelo_label.place (x= 245, y = 420)
+                            modelo_ingresar = info_cita [5]
+                            modelo_label = tk.Label (ventana_ingresar_citas, text = modelo_ingresar, font = "Helvetica 11")
+                            modelo_label.place (x= 245, y = 420)
 
-                    propetario_ingresar = info_cita [6]
-                    propetario_label = tk.Label (ventana_ingresar_citas, text = propetario_ingresar, font = "Helvetica 11")
-                    propetario_label.place (x = 245, y = 460)
+                            propetario_ingresar = info_cita [6]
+                            propetario_label = tk.Label (ventana_ingresar_citas, text = propetario_ingresar, font = "Helvetica 11")
+                            propetario_label.place (x = 245, y = 460)
 
-                    precio_pagar_label = tk.Label (ventana_ingresar_citas, text = "Tarifa neta a pagar:", font = "Helvetica 12 bold")
-                    precio_pagar_label.place (x= 210, y = 500)
+                            precio_pagar_label = tk.Label (ventana_ingresar_citas, text = "Tarifa neta a pagar:", font = "Helvetica 12 bold")
+                            precio_pagar_label.place (x= 210, y = 500)
+                            
+                            #Calculo del IVA correspondiente al tipo de carro
+                            if tipo_vehiculo_ingresar == "Automóvil particular y vehículo de carga liviana (<3500kg)":
+                                tarifa_tipo = particular_menor_igual_3500_fija
+                                sumar = particular_menor_igual_3500_fija * (float (porcentaje_IVA_fija)/100)
+                                tarifa_neta = tarifa_tipo + sumar
 
-                    if tipo_vehiculo_ingresar == "Automóvil particular y vehículo de carga liviana (<3500kg)":
-                        tarifa_tipo = particular_menor_igual_3500_fija
-                        sumar = particular_menor_igual_3500_fija * (porcentaje_IVA_fija/100)
-                        tarifa_neta = tarifa_tipo + sumar
+                            elif tipo_vehiculo_ingresar == "Automóvil particular y vehículo de carga liviana (3500kg - 8000kg)":
+                                tarifa_tipo = particular_entre_3500_y_8000_fija
+                                sumar = particular_entre_3500_y_8000_fija * (float (porcentaje_IVA_fija)/100)
+                                tarifa_neta = tarifa_tipo + sumar
 
-                    elif tipo_vehiculo_ingresar == "Automóvil particular y vehículo de carga liviana (3500kg - 8000kg)":
-                        tarifa_tipo = particular_entre_3500_y_8000_fija
-                        sumar = particular_entre_3500_y_8000_fija * (porcentaje_IVA_fija/100)
-                        tarifa_neta = tarifa_tipo + sumar
+                            elif tipo_vehiculo_ingresar == "Vehículo de carga pesada y cabezales (8000kg -)":
+                                tarifa_tipo = carga_pesada_mayor_igual_8000_fija
+                                sumar = carga_pesada_mayor_igual_8000_fija * (float (porcentaje_IVA_fija)/100)
+                                tarifa_neta = tarifa_tipo + sumar
 
-                    elif tipo_vehiculo_ingresar == "Vehículo de carga pesada y cabezales (8000kg -)":
-                        tarifa_tipo = carga_pesada_mayor_igual_8000_fija
-                        sumar = carga_pesada_mayor_igual_8000_fija * (porcentaje_IVA_fija/100)
-                        tarifa_neta = tarifa_tipo + sumar
+                            elif tipo_vehiculo_ingresar == "Taxis":
+                                tarifa_tipo = taxis_fija
+                                sumar = taxis_fija * (float (porcentaje_IVA_fija)/100)
+                                tarifa_neta = tarifa_tipo + sumar
 
-                    elif tipo_vehiculo_ingresar == "Taxis":
-                        tarifa_tipo = taxis_fija
-                        sumar = taxis_fija * (porcentaje_IVA_fija/100)
-                        tarifa_neta = tarifa_tipo + sumar
+                            elif tipo_vehiculo_ingresar == "Busetas":
+                                tarifa_tipo = buses_fija
+                                sumar = buses_fija * (float (porcentaje_IVA_fija)/100)
+                                tarifa_neta = tarifa_tipo + sumar
 
-                    elif tipo_vehiculo_ingresar == "Busetas":
-                        tarifa_tipo = buses_fija
-                        sumar = buses_fija * (porcentaje_IVA_fija/100)
-                        tarifa_neta = tarifa_tipo + sumar
+                            elif tipo_vehiculo_ingresar == "Motocicletas":
+                                tarifa_tipo = motos_fija
+                                sumar = motos_fija * (float (porcentaje_IVA_fija)/100)
+                                tarifa_neta = tarifa_tipo + sumar
 
-                    elif tipo_vehiculo_ingresar == "Motocicletas":
-                        tarifa_tipo = motos_fija
-                        sumar = motos_fija * (porcentaje_IVA_fija/100)
-                        tarifa_neta = tarifa_tipo + sumar
+                            elif tipo_vehiculo_ingresar == "Equipo especial de obras":
+                                tarifa_tipo = equipo_obras_fija
+                                sumar = equipo_obras_fija * (float (porcentaje_IVA_fija)/100)
+                                tarifa_neta = tarifa_tipo + sumar
 
-                    elif tipo_vehiculo_ingresar == "Equipo especial de obras":
-                        tarifa_tipo = equipo_obras_fija
-                        sumar = equipo_obras_fija * (porcentaje_IVA_fija/100)
-                        tarifa_neta = tarifa_tipo + sumar
-
-                    elif tipo_vehiculo_ingresar == "Equipo especial de agrícola":
-                        tarifa_tipo = equipo_agricola_fija
-                        sumar = equipo_agricola_fija * (porcentaje_IVA_fija/100)
-                        tarifa_neta = tarifa_tipo + sumar
-                    
-                    precio_pagar_info = tk.Label (ventana_ingresar_citas, text = tarifa_neta, font = "Helvetica 11")
-                    precio_pagar_info.place (x= 245, y = 540)
+                            elif tipo_vehiculo_ingresar == "Equipo especial de agrícola":
+                                tarifa_tipo = equipo_agricola_fija
+                                sumar = equipo_agricola_fija * (float (porcentaje_IVA_fija)/100)
+                                tarifa_neta = tarifa_tipo + sumar
+                            
+                            precio_pagar_info = tk.Label (ventana_ingresar_citas, text = tarifa_neta, font = "Helvetica 11")
+                            precio_pagar_info.place (x= 245, y = 540)
+                            MessageBox.showinfo ("Entrada a la cita", "La entrada a su cita se ha realizado correctamente, a continuación ingresará a una cola de espera")
+                            agregar_placa_cola_espera (info_cita [2]) #Se le pasa la placa para agregarla en la lista de espera
+                            ventana_ingresar_citas.destroy ()
+                        else:
+                            MessageBox.showerror ("Error", "El estado de la cita debe ser 'PENDIENTE'")
+                            return
+                    else:
+                        MessageBox.showerror ("Error", "El vehículo actualmente ya se encuentra en las colas")
+                        return
                 else:
-                    print ("Tarde")
+                    MessageBox.showerror ("Error", "Solo se permite la entrada con máximo una hora de antelación y no se permite la entrada si llega tarde.")
+                    return
+
+            else:
+                MessageBox.showerror ("Error", "La fecha de la cita no concuerda con la fecha actual")
+                return
 
 
 
@@ -972,11 +1082,13 @@ bandera_entro_configuracion = False
 cantidad_de_horas_mostrar = []
 
 citas = [[1, 'Primera vez', 'BNS-150', 'Automóvil particular y vehículo de carga liviana (<3500kg)', 'Toyota', 'Forturner 4x4', 'Miguel Francisco Gonzalez', '01234567890123456789', 'josemiguel4484@gmail.com', 'Belén, Heredia', '09/06/2023 06:25 PM', 'PENDIENTE'], [], 
-            [[2, 'Primera vez', 'BNS-150', 'Automóvil particular y vehículo de carga liviana (<3500kg)', 'Toyota', 'Forturner 4x4', 'Miguel Francisco Gonzalez', '01234567890123456789', 'josemiguel4484@gmail.com', 'Belén, Heredia', '17/06/2023 09:30 AM', 'PENDIENTE'], []]]
+            [[2, 'Primera vez', 'BNS-150', 'Automóvil particular y vehículo de carga liviana (<3500kg)', 'Toyota', 'Forturner 4x4', 'Miguel Francisco Gonzalez', '01234567890123456789', 'josemiguel4484@gmail.com', 'Belén, Heredia', '17/06/2023 04:00 PM', 'PENDIENTE'], []]]
 
 valor_seleccionado_manual = None
 valor_seleccionado_automatico = None
 info_cita = None
+colas_espera = [ ]
+colas_revision = [ ]
 numero_placa_cancelar = tk.StringVar ()
 contador_citas_cancelar = tk.StringVar ()
 numero_placa_ingresar = tk.StringVar ()
@@ -1023,6 +1135,34 @@ tarifas = [particular_menor_igual_3500_fija, particular_entre_3500_y_8000_fija, 
 
 lista_vehiculos = ["Automóvil particular y vehículo de carga liviana (<3500kg)", "Automóvil particular y vehículo de carga liviana (3500kg - 8000kg)", "Vehículo de carga pesada y cabezales (8000kg -)", "Taxis", "Busetas", "Motocicletas", "Equipo especial de obras", "Equipo especial de agrícola"]
 
+def crear_cola_espera (): #Crea las colas de trabajo
+    global colas_espera, cant_lineas_trabajo_fija
+    for contador_cola, cantidad_colas_a_crear in enumerate (range (cant_lineas_trabajo_fija)):
+        colas_espera.append ([ ])
+    print (colas_espera)
+
+def crear_cola_revision (): #Crea las colas de trabajo
+    global colas_revision, cant_lineas_trabajo_fija
+    for contador_cola, cantidad_colas_a_crear in enumerate (range (cant_lineas_trabajo_fija)):
+        colas_revision.append ([ ])
+    print (colas_revision)
+
+def validacion_existencia_placa_espera (placa): #Validacion para saber si la placa ya existe en la cola
+    global colas_espera
+    for cola in colas_espera:
+        if placa in cola:
+            return True
+    return False
+    
+def validacion_existencia_placa_revision (placa):
+    global colas_revision
+    for cola in colas_revision:
+        if placa in cola:
+            return True
+    return False
+
+crear_cola_espera ()
+crear_cola_revision ()
 
 ventana_principal.mainloop ()
 
