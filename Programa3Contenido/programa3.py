@@ -723,34 +723,7 @@ def programar_citas ():
     boton_cancelar = tk.Button (ventana_programar_citas, text = "Cancelar asignación de cita", font = "Helvetica 10 bold", bg = "#ff3333", height = 3, command = lambda: ventana_programar_citas.destroy () )
     boton_cancelar.place (x = 450, y = 650)
 
-def cancelar_citas ():
-    global info_cita
-    def tomar_cita_cancelar (citas, numero_cita_cancelar, numero_placa_cancelar):
-        global info_cita
-        info_cita = None
-
-        numero_cita_cancelar = int (numero_cita_cancelar)
-        numero_placa_cancelar = str (numero_placa_cancelar)
-        if numero_cita_cancelar == "" or numero_placa_cancelar == "":
-            MessageBox.showerror ("Error", "Porfavor llene todos los campos solicitados")
-            return
-        
-        return tomar_cita_cancelar_aux (citas, numero_cita_cancelar, numero_placa_cancelar)
-
-        
-    def tomar_cita_cancelar_aux (citas, numero_cita, numero_placa): #Funcion para tomar la información de la cita que se ocupa (recursiva)
-        global info_cita
-        if citas == []:
-            return []
-    
-        elif isinstance (citas [0], list):
-            if not ((citas [0]) == []) and numero_cita == citas [0] [0] and citas [0] [-1] == "PENDIENTE" and numero_placa == citas [0] [2]:
-                info_cita = citas [0]
-            return [tomar_cita_cancelar_aux (citas [0], numero_cita, numero_placa)] + tomar_cita_cancelar_aux (citas [1:], numero_cita, numero_placa)
-
-        else:
-            return [citas [0]] + tomar_cita_cancelar_aux (citas [1:], numero_cita, numero_placa)
-        
+def cancelar_citas ():      
     def modificar_estado_cita_cancelada (citas, numero_cita, numero_placa): #Funcion para modificar el estado de la cita (no recursiva)
         global bandera_encontrar, colas_espera, colas_revision, info_cita
         respuesta = tk.messagebox.askyesno ("Cancelar la cita?", "¿Está seguro de cancelar su cita?")
@@ -758,10 +731,14 @@ def cancelar_citas ():
             return
         bandera_encontrar = False
 
+        if numero_cita == "" or numero_placa == "":
+            MessageBox.showerror ("Error", "Porfavor llene todos los campos solicitados")
+            return
+        
         numero_cita = eval (numero_cita)
         numero_placa = str (numero_placa)
 
-        info_cita = tomar_cita_cancelar (citas, numero_cita, numero_placa)
+        tomar_cita (citas, numero_cita, numero_placa)
         print (info_cita)
         print (info_cita [2])
         respuesta_revision = validacion_existencia_placa_revision (info_cita [2]) #Validacion de existencia de la placa en la cola de revision
@@ -774,13 +751,11 @@ def cancelar_citas ():
             return
         
         if respuesta_espera == True: #Validacion de existencia en cola de espera
-            for cola_espera in cola_espera:
+            for cola_espera in colas_espera:
                 if info_cita [2] in cola_espera:
                     cola_espera.remove (info_cita [2])
-            print (cola_espera)
-        if numero_cita == "" or numero_placa == "":
-            MessageBox.showerror ("Error", "Porfavor llene todos los campos solicitados")
-            return
+            print (colas_espera)
+
         
         print (modificar_estado_cita_cancelada_aux (citas, numero_cita, numero_placa))
 
@@ -832,11 +807,13 @@ def ingresar_citas ():
         global info_cita
         info_cita = None
 
-        numero_cita = eval (numero_cita)
-        numero_placa = str (numero_placa)
         if numero_cita == "" or numero_placa == "":
             MessageBox.showerror ("Error", "Porfavor llene todos los campos solicitados")
             return
+        
+        numero_cita = int (numero_cita)
+        numero_placa = str (numero_placa)
+
         
         return tomar_cita_aux (citas, numero_cita, numero_placa)
 
@@ -1160,6 +1137,7 @@ def validacion_existencia_placa_revision (placa):
         if placa in cola:
             return True
     return False
+
 
 crear_cola_espera ()
 crear_cola_revision ()
