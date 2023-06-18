@@ -42,10 +42,13 @@ def configuracion_sistema():
     def guardar_informacion():
         
         if validar_entradas():
+            global bandera_configuracion
             global cant_lineas_trabajo_fija, hora_inicial_fija, hora_final_fija, minutos_cada_cita_fija, cant_max_dias_reinspeccion_fija
             global fallas_graves_para_no_circular_fija, meses_considerados_automatico_fija, porcentaje_IVA_fija
             global particular_menor_igual_3500_fija, particular_entre_3500_y_8000_fija, carga_pesada_mayor_igual_8000_fija
             global taxis_fija, buses_fija, motos_fija, equipo_obras_fija, equipo_agricola_fija
+
+            bandera_configuracion = True
 
             cant_lineas_trabajo_fija = cant_lineas_trabajo.get() 
             hora_inicial_fija = hora_inicial.get()
@@ -67,7 +70,9 @@ def configuracion_sistema():
             motos_fija = tarifas[5]
             equipo_obras_fija = tarifas[6]
             equipo_agricola_fija = tarifas[7]
-
+            #Se crean las colas dependiendo de la cantidad de lineas de trabajo
+            crear_cola_espera ()
+            crear_cola_revision ()
             limpiar_entradas()
 
 
@@ -976,9 +981,10 @@ def ingresar_citas ():
                 MessageBox.showerror ("Error", "La fecha de la cita no concuerda con la fecha actual")
                 return
 
-
-
-
+    if bandera_configuracion == False or bandera_configuracion == None:
+        #Se crean las colas dependiendo de la cantidad de lineas de trabajo
+        crear_cola_espera ()
+        crear_cola_revision ()
 
     #Ventana como tal
     ventana_ingresar_citas = tk.Toplevel ()
@@ -1351,6 +1357,8 @@ def mandar_correo_pdf (correo):
     archivo_pdf_mime.add_header ("Content-Dispositon", "attachment", filename = nombre_pdf)
     msg.attach (archivo_pdf_mime)
 
+    text = msg.as_string ()
+
     #Connectar con el servidor
     TIE_server = smtplib.SMTP (smtp_server, smtp_port, timeout = 60 )
     TIE_server.starttls ()
@@ -1413,6 +1421,7 @@ citas = [[1, 'Primera vez', 'BNS-150', 'Automóvil particular y vehículo de car
 valor_seleccionado_manual = None
 valor_seleccionado_automatico = None
 info_cita = None
+bandera_configuracion = None
 colas_espera = [ ]
 colas_revision = [ ]
 lista_fallas = {1: ("Falta de mufla", "Grave"), 2: ("Fallo de luces", "Leve")}
@@ -1470,15 +1479,16 @@ tarifas = [particular_menor_igual_3500_fija, particular_entre_3500_y_8000_fija, 
 
 lista_vehiculos = ["Automóvil particular y vehículo de carga liviana (<3500kg)", "Automóvil particular y vehículo de carga liviana (3500kg - 8000kg)", "Vehículo de carga pesada y cabezales (8000kg -)", "Taxis", "Busetas", "Motocicletas", "Equipo especial de obras", "Equipo especial de agrícola"]
 
+#Funciones utiles para cualquiera de las opciones
 def crear_cola_espera (): #Crea las colas de trabajo
     global colas_espera, cant_lineas_trabajo_fija
-    for contador_cola, cantidad_colas_a_crear in enumerate (range (cant_lineas_trabajo_fija)):
+    for contador_cola, cantidad_colas_a_crear in enumerate (range (int(cant_lineas_trabajo_fija))):
         colas_espera.append ([ ])
     print (colas_espera)
 
 def crear_cola_revision (): #Crea las colas de trabajo
     global colas_revision, cant_lineas_trabajo_fija
-    for contador_cola, cantidad_colas_a_crear in enumerate (range (cant_lineas_trabajo_fija)):
+    for contador_cola, cantidad_colas_a_crear in enumerate (range (int (cant_lineas_trabajo_fija))):
         colas_revision.append ([ ])
     print (colas_revision)
 
@@ -1495,10 +1505,6 @@ def validacion_existencia_placa_revision (placa):
         if placa in cola:
             return True
     return False
-
-
-crear_cola_espera ()
-crear_cola_revision ()
 
 ventana_principal.mainloop ()
 
