@@ -12,6 +12,7 @@ from datetime import datetime, timedelta
 from email_validator import validate_email, EmailNotValidError
 from tkcalendar import *
 import smtplib
+import os
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.mime.base import MIMEBase
@@ -1308,7 +1309,56 @@ def lista_de_fallas ():
         boton_agregar_falla.place (x = 195, y = 350)
 
 
+def mandar_correo_pdf (correo):
+    #Definir credenciales del servidos SMTP
+    if "gmail" in correo:
+        smtp_port = 587
+        smtp_server = "smtp.gmail.com"
 
+    elif "hotmail" or "outlook" in correo:
+        smtp_port = 587
+        smtp_server = "smtp.live.com"
+
+
+    #Información del correo
+    correo_from = "josemiguel4484@gmail.com"
+    correo_to = correo
+    titulo = "Revisión Técnica de Vehículos (ReTeVe) / Cita Información Importante"
+    clave_from = "xxvnbsyriavzxhep"
+
+    #Creación del objeto MIME para definir las partes del correo
+    msg = MIMEMultipart ()
+    msg['From'] = correo_from
+    msg['To'] = correo_to
+    msg['Subject'] = titulo
+    
+    body = f""" 
+    ¡Felicitaciones, el automóvil resgistrado a su nombre pasó la prueba!
+    """
+    #Agregar el cuerpo del correo al mensaje
+    msg.attach (MIMEText (body, "plain"))
+
+    #Agregar el PDF al correo
+    nombre_pdf = "hoja.pdf"
+    ubicacion_actual = os.path.dirname (os.path.abspath (__file__))
+    ubicacion_archivo = os.path.join (ubicacion_actual, nombre_pdf)
+
+    #Abrir el archivo
+    with open (ubicacion_archivo, "rb") as archivo:
+        info_archivo = archivo.read ()
+
+    archivo_pdf_mime = MIMEApplication (info_archivo, _subtype = "pdf")
+    archivo_pdf_mime.add_header ("Content-Dispositon", "attachment", filename = nombre_pdf)
+    msg.attach (archivo_pdf_mime)
+
+    #Connectar con el servidor
+    TIE_server = smtplib.SMTP (smtp_server, smtp_port, timeout = 60 )
+    TIE_server.starttls ()
+    TIE_server.login(correo_from, clave_from)
+
+
+    TIE_server.sendmail (correo_from, correo_to, text) #Enviar el correo
+    TIE_server.quit () #Salir del servidor
 
 
 def acerca_de():
