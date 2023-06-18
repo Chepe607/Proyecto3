@@ -12,10 +12,13 @@ from datetime import datetime, timedelta
 from email_validator import validate_email, EmailNotValidError
 from tkcalendar import *
 import smtplib
+import os
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.mime.base import MIMEBase
 from email.mime.application import MIMEApplication
+from fpdf import FPDF
+import webbrowser
 
 #Funciones
 
@@ -41,10 +44,13 @@ def configuracion_sistema():
     def guardar_informacion():
         
         if validar_entradas():
+            global bandera_configuracion
             global cant_lineas_trabajo_fija, hora_inicial_fija, hora_final_fija, minutos_cada_cita_fija, cant_max_dias_reinspeccion_fija
             global fallas_graves_para_no_circular_fija, meses_considerados_automatico_fija, porcentaje_IVA_fija
             global particular_menor_igual_3500_fija, particular_entre_3500_y_8000_fija, carga_pesada_mayor_igual_8000_fija
             global taxis_fija, buses_fija, motos_fija, equipo_obras_fija, equipo_agricola_fija
+
+            bandera_configuracion = True
 
             cant_lineas_trabajo_fija = cant_lineas_trabajo.get() 
             hora_inicial_fija = hora_inicial.get()
@@ -66,7 +72,9 @@ def configuracion_sistema():
             motos_fija = tarifas[5]
             equipo_obras_fija = tarifas[6]
             equipo_agricola_fija = tarifas[7]
-
+            #Se crean las colas dependiendo de la cantidad de lineas de trabajo
+            crear_cola_espera ()
+            crear_cola_revision ()
             limpiar_entradas()
 
 
@@ -725,7 +733,7 @@ def programar_citas ():
 
 def cancelar_citas ():      
     def modificar_estado_cita_cancelada (citas, numero_cita, numero_placa): #Funcion para modificar el estado de la cita (no recursiva)
-        global bandera_encontrar, colas_espera, colas_revision, info_cita
+        global bandera_encontrar, lista_colas_espera, lista_lineas_placas, info_cita
         respuesta = tk.messagebox.askyesno ("Cancelar la cita?", "¿Está seguro de cancelar su cita?")
         if respuesta == False:
             return
@@ -738,23 +746,21 @@ def cancelar_citas ():
         numero_cita = eval (numero_cita)
         numero_placa = str (numero_placa)
 
-        tomar_cita (citas, numero_cita, numero_placa)
-        print (info_cita)
-        print (info_cita [2])
+        tomar_cita (citas, numero_cita, numero_placa) #Cambiamos el valor de info_citas 
+
         respuesta_revision = validacion_existencia_placa_revision (info_cita [2]) #Validacion de existencia de la placa en la cola de revision
         respuesta_espera = validacion_existencia_placa_espera (info_cita [2]) #Validacion de existencia de la placa en la cola de espera
-        print (respuesta_espera)
-        print (respuesta_revision)
+
 
         if respuesta_revision == True: #Validacion de existencia en cola de revision
             MessageBox.showerror ("Error", "No se puede borrar la cita porque esta en la cola de revisión")
             return
         
         if respuesta_espera == True: #Validacion de existencia en cola de espera
-            for cola_espera in colas_espera:
+            for cola_espera in lista_colas_espera:
                 if info_cita [2] in cola_espera:
                     cola_espera.remove (info_cita [2])
-            print (colas_espera)
+            print (lista_colas_espera)
 
         
         print (modificar_estado_cita_cancelada_aux (citas, numero_cita, numero_placa))
@@ -802,7 +808,7 @@ def cancelar_citas ():
     boton_cancelar_cita.place (x = 195, y = 260)
 
 def ingresar_citas ():
-    global info_cita, colas_espera, colas_revision, cant_lineas_trabajo_fija, crear_cola_espera, crear_cola_revision, tomar_cita
+    global info_cita, lista_colas_espera, lista_lineas_placas, cant_lineas_trabajo_fija, crear_cola_espera, crear_cola_revision, tomar_cita
     def tomar_cita (citas, numero_cita, numero_placa): #Funcion para tomar la información de la cita que se ocupa (no recursiva)
         global info_cita
         info_cita = None
@@ -833,26 +839,26 @@ def ingresar_citas ():
     
 
     def validacion_existencia_placa_espera (placa): #Validacion para saber si la placa ya existe en la cola
-        global colas_espera
-        for cola in colas_espera:
+        global lista_colas_espera
+        for cola in lista_colas_espera:
             if placa in cola:
                 return True
         return False
     
     def validacion_existencia_placa_revision (placa):
-        global colas_revision
-        for cola in colas_revision:
+        global lista_colas_espera
+        for cola in lista_colas_espera:
             if placa in cola:
                 return True
         return False
     
     def agregar_placa_cola_espera (placa):
-        global colas_espera
+        global lista_colas_espera
         lista_indices = []
         lista_len_cada_cola = []
-        print (colas_espera)
+        print (lista_colas_espera)
         #Sacamos el indice de la cola y el len de cada una de las colas
-        for indice_cola, cola_espera in enumerate(colas_espera):
+        for indice_cola, cola_espera in enumerate(lista_colas_espera):
             lista_indices.append (indice_cola)
             lista_len_cada_cola.append (len (cola_espera))
         
@@ -861,11 +867,11 @@ def ingresar_citas ():
         indice_minimo_cola = lista_len_cada_cola.index (minimo_len_cola)
 
         #Se agrega la placa a la cola con menos vehiculos
-        for indice_cola2, cola_espera2 in enumerate (colas_espera):
+        for indice_cola2, cola_espera2 in enumerate (lista_colas_espera):
             if indice_minimo_cola == indice_cola2:
                 cola_espera2.append (placa)
 
-        print (colas_espera)
+        print (lista_colas_espera)
 
 
 
@@ -977,9 +983,10 @@ def ingresar_citas ():
                 MessageBox.showerror ("Error", "La fecha de la cita no concuerda con la fecha actual")
                 return
 
-
-
-
+    if bandera_configuracion == False or bandera_configuracion == None:
+        #Se crean las colas dependiendo de la cantidad de lineas de trabajo
+        crear_cola_espera ()
+        crear_cola_revision ()
 
     #Ventana como tal
     ventana_ingresar_citas = tk.Toplevel ()
@@ -1008,8 +1015,672 @@ def ingresar_citas ():
     boton_ingresar_cita = tk.Button (ventana_ingresar_citas, text = "Ingresar cita", font = "Helvetica 10 bold", width = 23, height = 3, bg = "#08f26e", command = lambda: mostrar_datos (citas, ingresar_citas_entry_numero_cita.get(), ingresar_citas_entry_numero_placa.get ()))
     boton_ingresar_cita.place (x= 195, y = 250)
 
+def lista_de_fallas ():
+    ventana_lista_de_fallas = tk.Toplevel ()
+    ventana_lista_de_fallas.title ("Lista de fallas CRUD")
+    ventana_lista_de_fallas.geometry ("540x480")
+    ventana_lista_de_fallas.config (bg = "white")
+
+    lista_de_fallas_label = tk.Label (ventana_lista_de_fallas, text = "Lista de fallas", font = "Helvetica 20 bold", bg = "white")
+    lista_de_fallas_label.place (x = 170 , y = 70)
+    lista_de_fallas_instrucciones = tk.Label (ventana_lista_de_fallas, text = "Porfavor presione los botones con las opciones para continuar.", font = "Helvetica 13", bg = "white")
+    lista_de_fallas_instrucciones.place (x = 50, y = 140)
+    boton_agregar_falla = tk.Button (ventana_lista_de_fallas, text = "Agregar falla", font = "Helvetica 10 bold", width = 20, height = 3, bg = "#C7D0D7", command = lambda: agregar_fallas ())
+    boton_agregar_falla.place (x= 70, y = 230)
+    boton_consultar_falla = tk.Button (ventana_lista_de_fallas, text = "Consultar falla",font = "Helvetica 10 bold",  width = 20, height = 3, bg = "#C7D0D7", command = lambda: consultar_fallas ())
+    boton_consultar_falla.place (x= 70, y = 330)
+    boton_modificar_falla = tk.Button (ventana_lista_de_fallas, text = "Modificar falla",font = "Helvetica 10 bold",  width = 20, height = 3, bg = "#C7D0D7", command = lambda: modificar_fallas ())
+    boton_modificar_falla.place (x= 300, y = 230)
+    boton_eliminar_falla = tk.Button (ventana_lista_de_fallas, text = "Eliminar falla",font = "Helvetica 10 bold", width = 20, height = 3, bg = "#C7D0D7", command = lambda: eliminar_fallas ())
+    boton_eliminar_falla.place (x= 300, y = 330)
+
+    def agregar_fallas ():
+        def existencia (numero_falla, descripcion_falla, tipo_falla):
+            for llave in lista_fallas:
+                if numero_falla == llave and descripcion_falla == lista_fallas [llave] [0] and tipo_falla == lista_fallas [llave] [1]:
+                    MessageBox.showerror ("Error", "Esta combinación ya existe")
+                    return True
+                elif descripcion_falla == lista_fallas [llave] [0]:
+                    MessageBox.showerror ("Error", "Ya existe esta descripción de falla, para cambiar sus datos debe modificarlos")
+                    return True
+            return False
+        
+                
+        def agrega (numero_falla, descripcion_falla, tipo_falla):
+            numero_falla = eval (numero_falla)
+            if not isinstance (numero_falla, int):
+                MessageBox.showerror ("Error", "El número de falla debe ser un entero")
+                return
+            
+            if  not tipo_falla in 'LeveGrave':
+                MessageBox.showerror ("Error", "El tipo de falla debe ser Leve o Grave")
+                return
+            
+            if numero_falla > 9999 or numero_falla < 1:
+                MessageBox.showerror ("Error", "El número de falla debe ser un entero entre 1 y 9999")
+                return
+            
+            if len (descripcion_falla) > 200 or len (descripcion_falla) < 5:
+                MessageBox.showerror ("Error", "La longitud de la descripción de la falla tiene que estar entre 5 y 200 caracteres")
+                return
+            
+            respuesta = existencia (numero_falla, descripcion_falla, tipo_falla)
+            if respuesta == True:
+                return
+            else:
+                lista_fallas [numero_falla] = (descripcion_falla, tipo_falla)
+                MessageBox.showinfo ("Agregar fallas", "Se ha agregado la falla correstamente")
+                print (lista_fallas)
+            
+        ventana_agregar_fallas = tk.Toplevel ()
+        ventana_agregar_fallas.geometry ("600x450")
+
+        #Elementos de Bienvenida
+        label_principal_agregar_fallas = tk.Label (ventana_agregar_fallas, text = "Agregar fallas", font = "Helvetica 20 bold")
+        label_principal_agregar_fallas.place (x= 200, y = 40)
+        instruccion_agregar_fallas = tk.Label (ventana_agregar_fallas, text = "Ingrese en los campos en blanco sus datos correspondientes", font = "Helvetica 13")
+        instruccion_agregar_fallas.place (x= 75, y = 85)
+
+        #Elementos de la cita
+        descripcion_label = tk.Label (ventana_agregar_fallas, text = "Descripción de la falla:", font = "Helvetica 14 bold")
+        descripcion_label.place (x = 70, y = 140)
+
+        tipo_falla_label = tk.Label (ventana_agregar_fallas, text = "Tipo de la falla:", font = "Helvetica 14 bold")
+        tipo_falla_label.place (x = 360, y = 140)
+
+        descripcion_falla_entry = tk.Entry (ventana_agregar_fallas, textvariable = descripcion_falla, font = "Helvetica 12", width = 20, justify = "center")
+        descripcion_falla_entry.place (x = 75, y = 190)
+
+        tipo_falla_entry = tk.Entry (ventana_agregar_fallas, textvariable = tipo_falla, font = "Helvetica 12", width = 18, justify = "center")
+        tipo_falla_entry.place (x = 360, y = 190)
+
+        numero_falla_label = tk.Label (ventana_agregar_fallas, text = "Número de falla:", font = "Helvetica 14 bold")
+        numero_falla_label.place (x= 220, y = 250)
+
+        numero_falla_entry = tk.Entry (ventana_agregar_fallas, textvariable= numero_falla, font = "Helvetica 10 bold", width = 20, justify = "center")
+        numero_falla_entry.place (x= 220, y = 290)
+
+        boton_agregar_falla = tk.Button (ventana_agregar_fallas, text = "Agregar falla", font = "Helvetica 10 bold" , width = 23, height = 3, bg = "#08f26e", command = lambda: agrega (numero_falla_entry.get (), descripcion_falla_entry.get (), tipo_falla_entry.get()))
+        boton_agregar_falla.place (x = 195, y = 350)
 
 
+    def consultar_fallas ():
+        def existencia (numero_falla, descripcion_falla, tipo_falla):
+            for llave in lista_fallas:
+                if numero_falla == llave and descripcion_falla == lista_fallas [llave] [0] and tipo_falla == lista_fallas [llave] [1]:
+                    return True
+            return False
+        
+                
+        def consulta (numero_falla, descripcion_falla, tipo_falla):
+            numero_falla = eval (numero_falla)
+            if not isinstance (numero_falla, int):
+                MessageBox.showerror ("Error", "El número de falla debe ser un entero")
+                return
+            
+            if  not tipo_falla in 'LeveGrave':
+                MessageBox.showerror ("Error", "El tipo de falla debe ser Leve o Grave")
+                return
+            
+            if numero_falla > 9999 or numero_falla < 1:
+                MessageBox.showerror ("Error", "El número de falla debe ser un entero entre 1 y 9999")
+                return
+            
+            if len (descripcion_falla) > 200 or len (descripcion_falla) < 5:
+                MessageBox.showerror ("Error", "La longitud de la descripción de la falla tiene que estar entre 5 y 200 caracteres")
+                return
+            
+            respuesta = existencia (numero_falla, descripcion_falla, tipo_falla)
+            if respuesta == False:
+                MessageBox.showerror ("Error", "La falla ingresada con los datos, no existe")
+                return
+            else:
+                MessageBox.showinfo ("Consultar fallas", "Efetivamente, la falla existe en la base de datos, podrá utilizarla sin problema")
+                print (lista_fallas)
+
+        ventana_consultar_fallas = tk.Toplevel ()
+        ventana_consultar_fallas.geometry ("600x450")
+
+        #Elementos de Bienvenida
+        label_principal_consultar_fallas = tk.Label (ventana_consultar_fallas, text = "Consultar fallas", font = "Helvetica 20 bold")
+        label_principal_consultar_fallas.place (x= 200, y = 40)
+        instruccion_consultar_fallas = tk.Label (ventana_consultar_fallas, text = "Ingrese en los campos en blanco sus datos correspondientes", font = "Helvetica 13")
+        instruccion_consultar_fallas.place (x= 75, y = 85)
+
+        #Elementos de la cita
+        descripcion_label = tk.Label (ventana_consultar_fallas, text = "Descripción de la falla:", font = "Helvetica 14 bold")
+        descripcion_label.place (x = 70, y = 140)
+
+        tipo_falla_label = tk.Label (ventana_consultar_fallas, text = "Tipo de la falla:", font = "Helvetica 14 bold")
+        tipo_falla_label.place (x = 360, y = 140)
+
+        descripcion_falla_entry = tk.Entry (ventana_consultar_fallas, textvariable = descripcion_falla, font = "Helvetica 12", width = 20, justify = "center")
+        descripcion_falla_entry.place (x = 75, y = 190)
+
+        tipo_falla_entry = tk.Entry (ventana_consultar_fallas, textvariable = tipo_falla, font = "Helvetica 12", width = 18, justify = "center")
+        tipo_falla_entry.place (x = 360, y = 190)
+
+        numero_falla_label = tk.Label (ventana_consultar_fallas, text = "Número de falla:", font = "Helvetica 14 bold")
+        numero_falla_label.place (x= 220, y = 250)
+
+        numero_falla_entry = tk.Entry (ventana_consultar_fallas, textvariable= numero_falla, font = "Helvetica 10 bold", width = 20, justify = "center")
+        numero_falla_entry.place (x= 220, y = 290)
+
+        boton_agregar_falla = tk.Button (ventana_consultar_fallas, text = "Consultar falla", font = "Helvetica 10 bold" , width = 23, height = 3, bg = "#08f26e", command = lambda: consulta (numero_falla_entry.get (), descripcion_falla_entry.get (), tipo_falla_entry.get()))
+        boton_agregar_falla.place (x = 195, y = 350)
+    
+    def modificar_fallas ():
+        def existencia (numero_falla, descripcion_falla, tipo_falla): #Validacion de existencia
+            for llave in lista_fallas:
+                if numero_falla == llave and descripcion_falla == lista_fallas [llave] [0] and tipo_falla == lista_fallas [llave] [1]:
+                    return True
+            return False
+        
+                
+        def modifica (numero_falla, descripcion_falla, tipo_falla, descripcion_falla_nuevo, tipo_falla_nuevo): #Valida y modifica los valores ingresados y los cambia por los nuevos
+            numero_falla = eval (numero_falla)
+            if not isinstance (numero_falla, int):
+                MessageBox.showerror ("Error", "El número de falla debe ser un entero")
+                return
+            
+            if  not tipo_falla in 'LeveGrave':
+                MessageBox.showerror ("Error", "El tipo de falla debe ser Leve o Grave")
+                return
+            
+            if  not tipo_falla_nuevo in 'LeveGrave':
+                MessageBox.showerror ("Error", "El tipo de falla debe ser Leve o Grave")
+                return
+            
+
+            
+            if numero_falla > 9999 or numero_falla < 1:
+                MessageBox.showerror ("Error", "El número de falla debe ser un entero entre 1 y 9999")
+                return
+            
+            if len (descripcion_falla) > 200 or len (descripcion_falla) < 5:
+                MessageBox.showerror ("Error", "La longitud de la descripción de la falla tiene que estar entre 5 y 200 caracteres")
+                return
+
+            if len (descripcion_falla_nuevo) > 200 or len (descripcion_falla_nuevo) < 5:
+                MessageBox.showerror ("Error", "La longitud de la descripción de la falla tiene que estar entre 5 y 200 caracteres")
+                return
+            
+            respuesta = existencia (numero_falla, descripcion_falla, tipo_falla)
+            if respuesta == False:
+                MessageBox.showerror ("Error", "La falla ingresada con los datos, no existe")
+                return
+            else:
+                lista_fallas [numero_falla] = (descripcion_falla_nuevo, tipo_falla_nuevo)
+                MessageBox.showinfo ("Modificar fallas", "Se ha modificado la falla correctamente")
+                print (lista_fallas)
+
+        ventana_consultar_fallas = tk.Toplevel ()
+        ventana_consultar_fallas.geometry ("600x550")
+        MessageBox.showwarning ("Consideración importante", "Se le mostrará dos espacios en blanco para cada uno de los 3 datos, el recuardo de arriba digite el dato actual. Para el nuevo digítelo en el espacio debajo del nuevo")
+
+        #Elementos de Bienvenida
+        label_principal_consultar_fallas = tk.Label (ventana_consultar_fallas, text = "Modificar fallas", font = "Helvetica 20 bold")
+        label_principal_consultar_fallas.place (x= 200, y = 40)
+        instruccion_consultar_fallas = tk.Label (ventana_consultar_fallas, text = "Ingrese en los campos en blanco sus datos correspondientes", font = "Helvetica 13")
+        instruccion_consultar_fallas.place (x= 75, y = 85)
+
+        #Elementos de la cita
+        descripcion_label = tk.Label (ventana_consultar_fallas, text = "Descripción de la falla:", font = "Helvetica 14 bold")
+        descripcion_label.place (x = 70, y = 140)
+
+        tipo_falla_label = tk.Label (ventana_consultar_fallas, text = "Tipo de la falla:", font = "Helvetica 14 bold")
+        tipo_falla_label.place (x = 360, y = 140)
+
+        descripcion_falla_entry = tk.Entry (ventana_consultar_fallas, textvariable = descripcion_falla, font = "Helvetica 12", width = 20, justify = "center")
+        descripcion_falla_entry.place (x = 75, y = 190)
+        descripcion_nueva = tk.Entry (ventana_consultar_fallas, textvariable = descripcion_falla2, font = "Helvetica 12", width = 20, justify = "center")
+        descripcion_nueva.place (x= 75, y = 240)
+
+
+        tipo_falla_entry = tk.Entry (ventana_consultar_fallas, textvariable = tipo_falla, font = "Helvetica 12", width = 18, justify = "center")
+        tipo_falla_entry.place (x = 360, y = 190)
+        tipo_falla_nueva = tk.Entry (ventana_consultar_fallas, textvariable = tipo_falla2, font = "Helvetica 12", width = 18, justify = "center")
+        tipo_falla_nueva.place (x = 360 ,y= 240)
+
+        numero_falla_label = tk.Label (ventana_consultar_fallas, text = "Número de falla:", font = "Helvetica 14 bold")
+        numero_falla_label.place (x= 220, y = 290)
+
+        numero_falla_entry = tk.Entry (ventana_consultar_fallas, textvariable= numero_falla, font = "Helvetica 10 bold", width = 20, justify = "center")
+        numero_falla_entry.place (x= 220, y = 340)
+
+        boton_agregar_falla = tk.Button (ventana_consultar_fallas, text = "Modificar falla", font = "Helvetica 10 bold" , width = 23, height = 3, bg = "#08f26e", command = lambda: modifica (numero_falla_entry.get (), descripcion_falla_entry.get (), tipo_falla_entry.get(), descripcion_nueva.get (), tipo_falla_nueva.get ()))
+        boton_agregar_falla.place (x = 195, y = 400)
+
+    def eliminar_fallas ():
+        def existencia (numero_falla, descripcion_falla, tipo_falla):
+            for llave in lista_fallas:
+                if numero_falla == llave and descripcion_falla == lista_fallas [llave] [0] and tipo_falla == lista_fallas [llave] [1]:
+                    return True
+            return False
+        
+                
+        def elimina (numero_falla, descripcion_falla, tipo_falla):
+            numero_falla = eval (numero_falla)
+            if not isinstance (numero_falla, int):
+                MessageBox.showerror ("Error", "El número de falla debe ser un entero")
+                return
+            
+            if  not tipo_falla in 'LeveGrave':
+                MessageBox.showerror ("Error", "El tipo de falla debe ser Leve o Grave")
+                return
+            
+            if numero_falla > 9999 or numero_falla < 1:
+                MessageBox.showerror ("Error", "El número de falla debe ser un entero entre 1 y 9999")
+                return
+            
+            if len (descripcion_falla) > 200 or len (descripcion_falla) < 5:
+                MessageBox.showerror ("Error", "La longitud de la descripción de la falla tiene que estar entre 5 y 200 caracteres")
+                return
+            
+            respuesta = existencia (numero_falla, descripcion_falla, tipo_falla)
+            if respuesta == False:
+                MessageBox.showerror ("Error", "La falla ingresada con los datos, no existe")
+                return
+            else:
+                del lista_fallas [numero_falla]
+                print (lista_fallas)
+
+        ventana_eliminar_fallas = tk.Toplevel ()
+        ventana_eliminar_fallas.geometry ("600x450")
+
+        #Elementos de Bienvenida
+        label_principal_eliminar_fallas = tk.Label (ventana_eliminar_fallas, text = "Eliminar fallas", font = "Helvetica 20 bold")
+        label_principal_eliminar_fallas.place (x= 200, y = 40)
+        instruccion_eliminar_fallas = tk.Label (ventana_eliminar_fallas, text = "Ingrese en los campos en blanco sus datos correspondientes", font = "Helvetica 13")
+        instruccion_eliminar_fallas.place (x= 75, y = 85)
+
+        #Elementos de la cita
+        descripcion_label = tk.Label (ventana_eliminar_fallas, text = "Descripción de la falla:", font = "Helvetica 14 bold")
+        descripcion_label.place (x = 70, y = 140)
+
+        tipo_falla_label = tk.Label (ventana_eliminar_fallas, text = "Tipo de la falla:", font = "Helvetica 14 bold")
+        tipo_falla_label.place (x = 360, y = 140)
+
+        descripcion_falla_entry = tk.Entry (ventana_eliminar_fallas, textvariable = descripcion_falla, font = "Helvetica 12", width = 20, justify = "center")
+        descripcion_falla_entry.place (x = 75, y = 190)
+
+        tipo_falla_entry = tk.Entry (ventana_eliminar_fallas, textvariable = tipo_falla, font = "Helvetica 12", width = 18, justify = "center")
+        tipo_falla_entry.place (x = 360, y = 190)
+
+        numero_falla_label = tk.Label (ventana_eliminar_fallas, text = "Número de falla:", font = "Helvetica 14 bold")
+        numero_falla_label.place (x= 220, y = 250)
+
+        numero_falla_entry = tk.Entry (ventana_eliminar_fallas, textvariable= numero_falla, font = "Helvetica 10 bold", width = 20, justify = "center")
+        numero_falla_entry.place (x= 220, y = 290)
+
+        boton_agregar_falla = tk.Button (ventana_eliminar_fallas, text = "Eliminar falla", font = "Helvetica 10 bold" , width = 23, height = 3, bg = "#08f26e", command = lambda: elimina (numero_falla_entry.get (), descripcion_falla_entry.get (), tipo_falla_entry.get()))
+        boton_agregar_falla.place (x = 195, y = 350)
+
+
+def mandar_correo_pdf (correo):
+    #Definir credenciales del servidos SMTP
+    if "gmail" in correo:
+        smtp_port = 587
+        smtp_server = "smtp.gmail.com"
+
+    elif "hotmail" or "outlook" in correo:
+        smtp_port = 587
+        smtp_server = "smtp.live.com"
+
+
+    #Información del correo
+    correo_from = "josemiguel4484@gmail.com"
+    correo_to = correo
+    titulo = "Revisión Técnica de Vehículos (ReTeVe) / Cita Información Importante"
+    clave_from = "xxvnbsyriavzxhep"
+
+    #Creación del objeto MIME para definir las partes del correo
+    msg = MIMEMultipart ()
+    msg['From'] = correo_from
+    msg['To'] = correo_to
+    msg['Subject'] = titulo
+    
+    body = f""" 
+    ¡Felicitaciones, el automóvil resgistrado a su nombre pasó la prueba!
+    """
+    #Agregar el cuerpo del correo al mensaje
+    msg.attach (MIMEText (body, "plain"))
+
+    #Agregar el PDF al correo
+    nombre_pdf = "hoja.pdf"
+    ubicacion_actual = os.path.dirname (os.path.abspath (__file__))
+    ubicacion_archivo = os.path.join (ubicacion_actual, nombre_pdf)
+
+    #Abrir el archivo
+    with open (ubicacion_archivo, "rb") as archivo:
+        info_archivo = archivo.read ()
+
+    archivo_pdf_mime = MIMEApplication (info_archivo, _subtype = "pdf")
+    archivo_pdf_mime.add_header ("Content-Dispositon", "attachment", filename = nombre_pdf)
+    msg.attach (archivo_pdf_mime)
+
+    text = msg.as_string ()
+
+    #Connectar con el servidor
+    TIE_server = smtplib.SMTP (smtp_server, smtp_port, timeout = 60 )
+    TIE_server.starttls ()
+    TIE_server.login(correo_from, clave_from)
+
+
+    TIE_server.sendmail (correo_from, correo_to, text) #Enviar el correo
+    TIE_server.quit () #Salir del servidor
+
+
+def tablero_revision():
+    print(lista_colas_espera)
+
+    def actualizar_tablero():
+        for i, linea in enumerate(lista_lineas_placas):
+            if len(linea) != 0:
+                for j, placa in enumerate(linea):
+                    lista_lineas_etiquetas[i][j].config(text=placa)
+                    if placa in placas_graves:
+                        lista_lineas_etiquetas[i][j].config(fg="red")
+                    else:
+                        lista_lineas_etiquetas[i][j].config(fg="black")
+
+    def t_comando(placa_comando):
+        indice_i = -1
+        for i, linea in enumerate(lista_colas_espera):
+            for j, placa in enumerate(linea):
+                if placa == placa_comando:
+                    indice_i = i
+                    indice_j = j
+                    break
+
+        if indice_i == -1:
+            for i, linea in enumerate(lista_lineas_placas):
+                for j, placa in enumerate(linea):
+                    if placa == placa_comando:
+                        indice_i = i
+                        indice_j = j
+                        break
+
+        if indice_i == -1:
+            MessageBox.showerror("Error", "Esa placa no está dentro del sistema")
+            return
+
+
+        if len(lista_lineas_placas[indice_i]) == 0 or len(lista_lineas_placas[indice_i]) < 5:
+            for linea in lista_lineas_placas:
+                for elemento in linea:
+                    if elemento not in control_placas_diccionario:
+                        control_placas_diccionario[elemento] = []
+            if len(lista_colas_espera[indice_i]) != 0:
+                lista_lineas_placas[indice_i].insert(0, lista_colas_espera[indice_i].pop(0))
+            elif len(lista_lineas_placas[indice_i]) < 5 and len(lista_colas_espera[indice_i]) == 0:
+                lista_lineas_placas[indice_i].insert(0, "")
+
+            actualizar_tablero()
+        else:
+            MessageBox.showerror("Error", "Este comando no se puede aplicar porque existe una placa en el puesto 5.")
+
+
+    def u_comando(placa_tablero):
+        for i, linea in enumerate(lista_lineas_placas):
+            if len(linea) == 0:
+                MessageBox.showerror("Error", f"No se puede aplicar este comando porque no hay ninguna placa en la linea {i+1}.")
+                return
+            else:
+                for j, placa in enumerate(linea):
+                    if j == 4 and placa == placa_tablero:
+                        MessageBox.showerror("Error", f"Este comando no se puede aplicar porque la placa está en el puesto {j+1}.")
+                        return
+                    elif j < 4 and placa == placa_tablero:
+                        if j == len(linea) - 1:
+                            lista_lineas_placas[i] = lista_lineas_placas[i][:j] + [""] + [lista_lineas_placas[i][-1]]
+                            print(lista_lineas_placas[i])
+                        elif lista_lineas_placas[i][j+1] == "":
+
+                            if isinstance(lista_lineas_placas[i][:j], str) and isinstance(lista_lineas_placas[i][:j+2], str):
+                                lista_lineas_placas[i] = [lista_lineas_placas[i][:j]] + [""] + [lista_lineas_placas[i][j]] + [lista_lineas_placas[i][j+2:]]
+                            elif isinstance(lista_lineas_placas[i][:j+2], str):
+                                lista_lineas_placas[i] = lista_lineas_placas[i][:j] + [""] + [lista_lineas_placas[i][j]] + [lista_lineas_placas[i][j+2:]]
+                            elif isinstance(lista_lineas_placas[i][:j], str):
+                                lista_lineas_placas[i] = [lista_lineas_placas[i][:j]] + [""] + [lista_lineas_placas[i][j]] + lista_lineas_placas[i][j+2:]
+                            else:
+                                lista_lineas_placas[i] = lista_lineas_placas[i][:j] + [""] + [lista_lineas_placas[i][j]] + lista_lineas_placas[i][j+2:]
+                              
+                        else:
+                            MessageBox.showerror("Error", f"No se puede aplicar este comando porque el puesto {j+2} debe estar vacío.")
+                            return 
+                        actualizar_tablero()
+                        return
+                    
+        MessageBox.showerror("Error", "La placa no se encuentra los puestos del tablero.")
+        return
+
+
+    def e_comando(placa, num_falla):
+        print(placa, num_falla)
+        try:
+            num_falla = int(num_falla)
+        except:
+            MessageBox.showerror("Error", "No se puede aplicar el comando porque el número de falla sólo puede tener números.")
+            return
+        
+        if num_falla not in lista_fallas:
+            MessageBox.showerror("Error", "La falla ingresada no está en la lista de fallas.")
+            return
+        
+        falla = lista_fallas[num_falla]
+        if falla[-1] == "Grave" and placa not in placas_graves:
+            placas_graves.append(placa)
+
+        control_placas_diccionario[placa].append(falla)
+        print(control_placas_diccionario)
+
+        actualizar_tablero()
+
+
+    def f_comando(placa_tablero):
+        for linea in lista_lineas_placas:
+            for j, placa in enumerate(linea):
+                if j < 4 and placa == placa_tablero:
+                    MessageBox.showerror("Error", "Este comando no se puede aplicar porque la placa no se encuentra en el puesto 5.")
+                    return
+                elif j == 4 and placa == placa_tablero:
+                    linea.pop(-1)
+                    print(linea[j-1])
+                    t_comando(linea[j-1])
+                    actualizar_tablero()
+                    fin_proceso(placa)
+                
+    def fin_proceso(placa):
+        def sacar_datos_del_sistema(placa):
+            for elemento in placas_graves:
+                if elemento == placa:
+                    del elemento
+                    print(placas_graves)
+
+            del control_placas_diccionario[placa]
+            print(control_placas_diccionario)
+
+
+        def determinar_estado(placa):
+            if control_placas_diccionario[placa] == []:
+                return "APROBADO"
+                
+            else:
+                fallas_graves = 0
+                fallas_leves = 0
+                for tupla_falla in control_placas_diccionario[placa]:
+                    if fallas_graves == fallas_graves_para_no_circular_fija:
+                        return "SACAR DE CIRCULACIÓN"
+                    if tupla_falla[-1] == "Grave":
+                        fallas_graves += 1
+                    elif tupla_falla[-1] == "Leve":
+                        fallas_leves += 1
+
+                if fallas_graves > 0:
+                    return "REINSPECCIÓN"
+                else:
+                    return "APROBADO"
+
+
+        def conseguir_cita(nodo, placa): 
+            if nodo[0] != [] and nodo[0][2] == placa:
+                return nodo[0]
+            elif len(nodo) == 2:
+                return None
+            else:
+                return conseguir_cita(nodo[2], placa)
+            
+        def asignar_datos(placa):
+            global num_cita, estado, tipo, tipo_vehiculo, marca, modelo, dueño, telefono, correo, direccion, fecha_cita
+
+            cita = conseguir_cita(citas, placa)
+
+            if cita == None:
+                print("Placa no existe en el sistema de citas")
+                num_cita = ""
+                tipo = ""
+                tipo_vehiculo = ""
+                marca = ""
+                modelo = ""
+                dueño = ""
+                telefono = ""
+                correo = ""
+                direccion = ""
+                fecha_cita = ""
+                return
+            
+            num_cita = cita[0]
+            tipo = cita[1]
+            tipo_vehiculo = cita[3]
+            marca = cita[4]
+            modelo = cita[5]
+            dueño = cita[6]
+            telefono = cita[7]
+            correo = cita[8]
+            direccion = cita[9]
+            fecha_cita = cita[10]
+            estado = determinar_estado(placa)
+            crear_resultado()
+
+
+        def crear_resultado():
+            resultado_pdf = FPDF(orientation="P", unit="mm", format="A4")
+
+            resultado_pdf.add_page()
+            resultado_pdf.set_font("Arial", "", 16)
+            resultado_pdf.text(x=70, y=25, txt="RESULTADO DE REVISIÓN")
+            resultado_pdf.text(x=15, y=45, txt=f"Número de cita: {num_cita}")
+            resultado_pdf.text(x=15, y=60, txt=f"Tipo de cita: {tipo}")
+            resultado_pdf.text(x=15, y=75, txt=f"Tipo de vehículo: {tipo_vehiculo}")
+            resultado_pdf.text(x=15, y=90, txt=f"Marca del vehículo: {marca}")
+            resultado_pdf.text(x=15, y=105, txt=f"Modelo del vehículo: {modelo}")
+            resultado_pdf.text(x=15, y=120, txt=f"Placa del vehículo: {placa}")
+            resultado_pdf.text(x=15, y=135, txt=f"Dueño del vehículo: {dueño}")
+            resultado_pdf.text(x=15, y=150, txt=f"Teléfono: {telefono}")
+            resultado_pdf.text(x=15, y=165, txt=f"Correo: {correo}")
+            resultado_pdf.text(x=15, y=180, txt=f"Dirección: {direccion}")
+            resultado_pdf.text(x=15, y=195, txt=f"Día de la cita: {fecha_cita}")
+            resultado_pdf.text(x=70, y=215, txt=f"Estado de la revisión: {estado}")
+            
+            if control_placas_diccionario[placa] == []:
+                resultado_pdf.text(x=15, y=235, txt="Fallas: 0")
+            else:
+                resultado_pdf.text(x=15, y=235, txt="Fallas:")
+                for i, tupla_falla in enumerate(control_placas_diccionario[placa]):
+                    resultado_pdf.text(x=30, y=250 + 10*i, txt=f"{tupla_falla}")
+
+
+
+
+            resultado_pdf.output("Resultado.pdf")
+            sacar_datos_del_sistema(placa)
+
+            webbrowser.open_new(r"C:/Users/Emmanuel/Desktop/Resultado.pdf")
+
+        asignar_datos(placa)
+        
+
+    
+    def ejecutar(comando):
+        if comando == "":
+            MessageBox.showerror("Error", "Ningún comando fue escrito.")
+            return
+        print(lista_colas_espera)
+        
+        # TXXXXXX TERMINADO
+        if comando[0] == "T":
+            t_comando(comando[1:])
+        
+        # UXXXXXX TERMINADO
+        elif comando[0] == "U":
+            u_comando(comando[1:])
+        
+        # EXXXXXXYYYY
+        elif comando[0] == "E":
+            e_comando(comando[1:-4], comando[-4:])
+        
+        # FXXXXXX
+        elif comando[0] == "F":
+            f_comando(comando[1:])
+        
+        # R TERMINADO
+        elif comando == "R":
+            tablero_ventana.destroy()
+        
+        # Comando no valido
+        else:
+            MessageBox.showerror("Comando inválido", "El comando que fue ingresado no es válido")
+
+        if comando != "R":
+            comando_entry.delete(0, END)
+        print(comando)
+
+
+    #Ventana del tablero
+    tablero_ventana = Toplevel()
+    tablero_ventana.geometry("1000x750")
+    tablero_ventana.title("Tablero de revisión")
+
+    #Tablero
+    fecha = Label(tablero_ventana, text="Fecha:", font="Helvetica 12 bold")
+    linea = Label(tablero_ventana, text="Línea", font="Helvetica 13 bold")
+    puesto1 = Label(tablero_ventana, text="Puesto 1", font="Helvetica 13 bold")
+    puesto2 = Label(tablero_ventana, text="Puesto 2", font="Helvetica 13 bold")
+    puesto3 = Label(tablero_ventana, text="Puesto 3", font="Helvetica 13 bold")
+    puesto4 = Label(tablero_ventana, text="Puesto 4", font="Helvetica 13 bold")
+    puesto5 = Label(tablero_ventana, text="Puesto 5", font="Helvetica 13 bold")
+
+    fecha.place(x=60, y=10)
+    linea.place(x=60, y=40)
+    puesto1.place(x=200, y=40)
+    puesto2.place(x=350, y=40)
+    puesto3.place(x=500, y=40)
+    puesto4.place(x=650, y=40)
+    puesto5.place(x=800, y=40)
+
+    comando_variable = StringVar()
+
+    for i in range(cant_lineas_trabajo_fija):
+        numero_linea = Label(tablero_ventana, text=str(i+1), font="Helvetica 9")
+        numero_linea.place(x=80, y=65 + 25*i)
+        linea_placas_etiquetas = []
+        for j in range(5):
+            placa_etiqueta = Label(tablero_ventana, font="Helvetica 9")
+            placa_etiqueta.place(x=210 + 150*j, y=65 + 25*i)
+            linea_placas_etiquetas.append(placa_etiqueta) 
+        lista_lineas_etiquetas.append(linea_placas_etiquetas)
+
+    comando_etiqueta = Label(tablero_ventana, text="COMANDO: ", font="Helvetica 13 bold")
+    comando_entry = Entry(tablero_ventana, textvariable=comando_variable)
+    ejecutar_boton = Button(tablero_ventana, text="Ejecutar", font="Helvetica 9", bg="brown", command=lambda: ejecutar(comando_variable.get()))
+
+    comando_etiqueta.place(x=80, y=70 + 25*(i+1))
+    comando_entry.place(x=180, y=72 + 25*(i+1))
+    ejecutar_boton.place(x=310, y=69 + 25*(i+1))
+
+
+    tablero_ventana.mainloop()
 
 
 def acerca_de():
@@ -1058,14 +1729,27 @@ contador_citas = 2
 bandera_entro_configuracion = False
 cantidad_de_horas_mostrar = []
 
-citas = [[1, 'Primera vez', 'BNS-150', 'Automóvil particular y vehículo de carga liviana (<3500kg)', 'Toyota', 'Forturner 4x4', 'Miguel Francisco Gonzalez', '01234567890123456789', 'josemiguel4484@gmail.com', 'Belén, Heredia', '09/06/2023 06:25 PM', 'PENDIENTE'], [], 
+citas = [[1, 'Primera vez', 'BNS-150', 'Automóvil particular y vehículo de carga liviana (<3500kg)', 'Toyota', 'Forturner 4x4', 'Miguel Francisco Gonzalez', '01234567890123456789', 'josemiguel4484@gmail.com', 'Belén, Heredia', '18/06/2023 02:50 PM', 'PENDIENTE'], [], 
             [[2, 'Primera vez', 'BNS-150', 'Automóvil particular y vehículo de carga liviana (<3500kg)', 'Toyota', 'Forturner 4x4', 'Miguel Francisco Gonzalez', '01234567890123456789', 'josemiguel4484@gmail.com', 'Belén, Heredia', '17/06/2023 04:00 PM', 'PENDIENTE'], []]]
 
 valor_seleccionado_manual = None
 valor_seleccionado_automatico = None
 info_cita = None
-colas_espera = [ ]
-colas_revision = [ ]
+bandera_configuracion = None
+lista_colas_espera = [ ]
+lista_lineas_placas = [ ]
+lista_lineas_etiquetas = []
+placas_graves = []
+control_placas_diccionario = {}
+lista_fallas = {1: ("Falta de mufla", "Grave"), 2: ("Fallo de luces", "Leve")}
+descripcion_falla = tk.StringVar ()
+tipo_falla = tk.StringVar ()
+numero_falla = tk.StringVar ()
+
+descripcion_falla2 = tk.StringVar ()
+tipo_falla2 = tk.StringVar ()
+numero_falla2 = tk.StringVar ()
+
 numero_placa_cancelar = tk.StringVar ()
 contador_citas_cancelar = tk.StringVar ()
 numero_placa_ingresar = tk.StringVar ()
@@ -1112,35 +1796,32 @@ tarifas = [particular_menor_igual_3500_fija, particular_entre_3500_y_8000_fija, 
 
 lista_vehiculos = ["Automóvil particular y vehículo de carga liviana (<3500kg)", "Automóvil particular y vehículo de carga liviana (3500kg - 8000kg)", "Vehículo de carga pesada y cabezales (8000kg -)", "Taxis", "Busetas", "Motocicletas", "Equipo especial de obras", "Equipo especial de agrícola"]
 
+#Funciones utiles para cualquiera de las opciones
 def crear_cola_espera (): #Crea las colas de trabajo
-    global colas_espera, cant_lineas_trabajo_fija
-    for contador_cola, cantidad_colas_a_crear in enumerate (range (cant_lineas_trabajo_fija)):
-        colas_espera.append ([ ])
-    print (colas_espera)
+    global lista_colas_espera, cant_lineas_trabajo_fija
+    for contador_cola, cantidad_colas_a_crear in enumerate (range (int(cant_lineas_trabajo_fija))):
+        lista_colas_espera.append ([ ])
+    print (lista_colas_espera)
 
 def crear_cola_revision (): #Crea las colas de trabajo
-    global colas_revision, cant_lineas_trabajo_fija
-    for contador_cola, cantidad_colas_a_crear in enumerate (range (cant_lineas_trabajo_fija)):
-        colas_revision.append ([ ])
-    print (colas_revision)
+    global lista_lineas_placas, cant_lineas_trabajo_fija
+    for contador_cola, cantidad_colas_a_crear in enumerate (range (int (cant_lineas_trabajo_fija))):
+        lista_lineas_placas.append ([ ])
+    print (lista_lineas_placas)
 
 def validacion_existencia_placa_espera (placa): #Validacion para saber si la placa ya existe en la cola
-    global colas_espera
-    for cola in colas_espera:
+    global lista_colas_espera
+    for cola in lista_colas_espera:
         if placa in cola:
             return True
     return False
     
 def validacion_existencia_placa_revision (placa):
-    global colas_revision
-    for cola in colas_revision:
+    global lista_lineas_placas
+    for cola in lista_lineas_placas:
         if placa in cola:
             return True
     return False
-
-
-crear_cola_espera ()
-crear_cola_revision ()
 
 ventana_principal.mainloop ()
 
