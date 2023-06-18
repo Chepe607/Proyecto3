@@ -1492,6 +1492,26 @@ def tablero_revision():
                     fin_proceso(placa)
                 
     def fin_proceso(placa):
+
+        def certificado_transito(placa):
+            mes = fecha_cita[3:6]
+            año_vigencia = str(int(fecha_cita[-4:])+1)
+            fecha_vigencia = mes + año_vigencia
+            certificado_pdf = FPDF(orientation="P", unit="mm", format="A4")
+
+            certificado_pdf.add_page()
+            certificado_pdf.set_font("Arial", "", 16)
+            certificado_pdf.text(x=70, y=15, txt="CERTIFICADO DE TRÁNSITO")
+            certificado_pdf.text(x=15, y=45, txt=f"Placa del vehículo: {placa}")
+            certificado_pdf.text(x=15, y=60, txt=f"Marca del vehículo: {marca}")
+            certificado_pdf.text(x=15, y=75, txt=f"Tipo de vehículo: {tipo_vehiculo}")
+            certificado_pdf.text(x=15, y=90, txt=f"Dueño del vehículo: {dueño}")
+            certificado_pdf.text(x=70, y=120, txt=f"Vigencia del certificado: {fecha_vigencia}")
+
+
+            certificado_pdf.output("Certificado de tránsito.pdf")
+            #webbrowser.open_new(r"C:/Users/Emmanuel/Desktop/Certificado de tránsito.pdf")
+
         def sacar_datos_del_sistema(placa):
             for elemento in placas_graves:
                 if elemento == placa:
@@ -1561,6 +1581,9 @@ def tablero_revision():
             direccion = cita[9]
             fecha_cita = cita[10]
             estado = determinar_estado(placa)
+            if estado == "APROBADO":
+                certificado_transito(placa)
+
             crear_resultado()
 
 
