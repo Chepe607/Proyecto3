@@ -2,6 +2,7 @@
 #Realizado por Emmanuel Rodríguez y José Miguel González Barrantes
 """Información importante"""
 
+print("asdfasdf")
 
 #Módulos
 from tkinter import ttk
