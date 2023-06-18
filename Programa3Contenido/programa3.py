@@ -738,13 +738,11 @@ def cancelar_citas ():
         numero_cita = eval (numero_cita)
         numero_placa = str (numero_placa)
 
-        tomar_cita (citas, numero_cita, numero_placa)
-        print (info_cita)
-        print (info_cita [2])
+        tomar_cita (citas, numero_cita, numero_placa) #Cambiamos el valor de info_citas 
+
         respuesta_revision = validacion_existencia_placa_revision (info_cita [2]) #Validacion de existencia de la placa en la cola de revision
         respuesta_espera = validacion_existencia_placa_espera (info_cita [2]) #Validacion de existencia de la placa en la cola de espera
-        print (respuesta_espera)
-        print (respuesta_revision)
+
 
         if respuesta_revision == True: #Validacion de existencia en cola de revision
             MessageBox.showerror ("Error", "No se puede borrar la cita porque esta en la cola de revisión")
@@ -1008,6 +1006,307 @@ def ingresar_citas ():
     boton_ingresar_cita = tk.Button (ventana_ingresar_citas, text = "Ingresar cita", font = "Helvetica 10 bold", width = 23, height = 3, bg = "#08f26e", command = lambda: mostrar_datos (citas, ingresar_citas_entry_numero_cita.get(), ingresar_citas_entry_numero_placa.get ()))
     boton_ingresar_cita.place (x= 195, y = 250)
 
+def lista_de_fallas ():
+    ventana_lista_de_fallas = tk.Toplevel ()
+    ventana_lista_de_fallas.title ("Lista de fallas CRUD")
+    ventana_lista_de_fallas.geometry ("540x480")
+    ventana_lista_de_fallas.config (bg = "white")
+
+    lista_de_fallas_label = tk.Label (ventana_lista_de_fallas, text = "Lista de fallas", font = "Helvetica 20 bold", bg = "white")
+    lista_de_fallas_label.place (x = 170 , y = 70)
+    lista_de_fallas_instrucciones = tk.Label (ventana_lista_de_fallas, text = "Porfavor presione los botones con las opciones para continuar.", font = "Helvetica 13", bg = "white")
+    lista_de_fallas_instrucciones.place (x = 50, y = 140)
+    boton_agregar_falla = tk.Button (ventana_lista_de_fallas, text = "Agregar falla", font = "Helvetica 10 bold", width = 20, height = 3, bg = "#C7D0D7", command = lambda: agregar_fallas ())
+    boton_agregar_falla.place (x= 70, y = 230)
+    boton_consultar_falla = tk.Button (ventana_lista_de_fallas, text = "Consultar falla",font = "Helvetica 10 bold",  width = 20, height = 3, bg = "#C7D0D7", command = lambda: consultar_fallas ())
+    boton_consultar_falla.place (x= 70, y = 330)
+    boton_modificar_falla = tk.Button (ventana_lista_de_fallas, text = "Modificar falla",font = "Helvetica 10 bold",  width = 20, height = 3, bg = "#C7D0D7", command = lambda: modificar_fallas ())
+    boton_modificar_falla.place (x= 300, y = 230)
+    boton_eliminar_falla = tk.Button (ventana_lista_de_fallas, text = "Eliminar falla",font = "Helvetica 10 bold", width = 20, height = 3, bg = "#C7D0D7", command = lambda: eliminar_fallas ())
+    boton_eliminar_falla.place (x= 300, y = 330)
+
+    def agregar_fallas ():
+        def existencia (numero_falla, descripcion_falla, tipo_falla):
+            for llave in lista_fallas:
+                if numero_falla == llave and descripcion_falla == lista_fallas [llave] [0] and tipo_falla == lista_fallas [llave] [1]:
+                    MessageBox.showerror ("Error", "Esta combinación ya existe")
+                    return True
+                elif descripcion_falla == lista_fallas [llave] [0]:
+                    MessageBox.showerror ("Error", "Ya existe esta descripción de falla, para cambiar sus datos debe modificarlos")
+                    return True
+            return False
+        
+                
+        def agrega (numero_falla, descripcion_falla, tipo_falla):
+            numero_falla = eval (numero_falla)
+            if not isinstance (numero_falla, int):
+                MessageBox.showerror ("Error", "El número de falla debe ser un entero")
+                return
+            
+            if  not tipo_falla in 'LeveGrave':
+                MessageBox.showerror ("Error", "El tipo de falla debe ser Leve o Grave")
+                return
+            
+            if numero_falla > 9999 or numero_falla < 1:
+                MessageBox.showerror ("Error", "El número de falla debe ser un entero entre 1 y 9999")
+                return
+            
+            if len (descripcion_falla) > 200 or len (descripcion_falla) < 5:
+                MessageBox.showerror ("Error", "La longitud de la descripción de la falla tiene que estar entre 5 y 200 caracteres")
+                return
+            
+            respuesta = existencia (numero_falla, descripcion_falla, tipo_falla)
+            if respuesta == True:
+                return
+            else:
+                lista_fallas [numero_falla] = (descripcion_falla, tipo_falla)
+                MessageBox.showinfo ("Agregar fallas", "Se ha agregado la falla correstamente")
+                print (lista_fallas)
+            
+        ventana_agregar_fallas = tk.Toplevel ()
+        ventana_agregar_fallas.geometry ("600x450")
+
+        #Elementos de Bienvenida
+        label_principal_agregar_fallas = tk.Label (ventana_agregar_fallas, text = "Agregar fallas", font = "Helvetica 20 bold")
+        label_principal_agregar_fallas.place (x= 200, y = 40)
+        instruccion_agregar_fallas = tk.Label (ventana_agregar_fallas, text = "Ingrese en los campos en blanco sus datos correspondientes", font = "Helvetica 13")
+        instruccion_agregar_fallas.place (x= 75, y = 85)
+
+        #Elementos de la cita
+        descripcion_label = tk.Label (ventana_agregar_fallas, text = "Descripción de la falla:", font = "Helvetica 14 bold")
+        descripcion_label.place (x = 70, y = 140)
+
+        tipo_falla_label = tk.Label (ventana_agregar_fallas, text = "Tipo de la falla:", font = "Helvetica 14 bold")
+        tipo_falla_label.place (x = 360, y = 140)
+
+        descripcion_falla_entry = tk.Entry (ventana_agregar_fallas, textvariable = descripcion_falla, font = "Helvetica 12", width = 20, justify = "center")
+        descripcion_falla_entry.place (x = 75, y = 190)
+
+        tipo_falla_entry = tk.Entry (ventana_agregar_fallas, textvariable = tipo_falla, font = "Helvetica 12", width = 18, justify = "center")
+        tipo_falla_entry.place (x = 360, y = 190)
+
+        numero_falla_label = tk.Label (ventana_agregar_fallas, text = "Número de falla:", font = "Helvetica 14 bold")
+        numero_falla_label.place (x= 220, y = 250)
+
+        numero_falla_entry = tk.Entry (ventana_agregar_fallas, textvariable= numero_falla, font = "Helvetica 10 bold", width = 20, justify = "center")
+        numero_falla_entry.place (x= 220, y = 290)
+
+        boton_agregar_falla = tk.Button (ventana_agregar_fallas, text = "Agregar falla", font = "Helvetica 10 bold" , width = 23, height = 3, bg = "#08f26e", command = lambda: agrega (numero_falla_entry.get (), descripcion_falla_entry.get (), tipo_falla_entry.get()))
+        boton_agregar_falla.place (x = 195, y = 350)
+
+
+    def consultar_fallas ():
+        def existencia (numero_falla, descripcion_falla, tipo_falla):
+            for llave in lista_fallas:
+                if numero_falla == llave and descripcion_falla == lista_fallas [llave] [0] and tipo_falla == lista_fallas [llave] [1]:
+                    return True
+            return False
+        
+                
+        def consulta (numero_falla, descripcion_falla, tipo_falla):
+            numero_falla = eval (numero_falla)
+            if not isinstance (numero_falla, int):
+                MessageBox.showerror ("Error", "El número de falla debe ser un entero")
+                return
+            
+            if  not tipo_falla in 'LeveGrave':
+                MessageBox.showerror ("Error", "El tipo de falla debe ser Leve o Grave")
+                return
+            
+            if numero_falla > 9999 or numero_falla < 1:
+                MessageBox.showerror ("Error", "El número de falla debe ser un entero entre 1 y 9999")
+                return
+            
+            if len (descripcion_falla) > 200 or len (descripcion_falla) < 5:
+                MessageBox.showerror ("Error", "La longitud de la descripción de la falla tiene que estar entre 5 y 200 caracteres")
+                return
+            
+            respuesta = existencia (numero_falla, descripcion_falla, tipo_falla)
+            if respuesta == False:
+                MessageBox.showerror ("Error", "La falla ingresada con los datos, no existe")
+                return
+            else:
+                MessageBox.showinfo ("Consultar fallas", "Efetivamente, la falla existe en la base de datos, podrá utilizarla sin problema")
+                print (lista_fallas)
+
+        ventana_consultar_fallas = tk.Toplevel ()
+        ventana_consultar_fallas.geometry ("600x450")
+
+        #Elementos de Bienvenida
+        label_principal_consultar_fallas = tk.Label (ventana_consultar_fallas, text = "Consultar fallas", font = "Helvetica 20 bold")
+        label_principal_consultar_fallas.place (x= 200, y = 40)
+        instruccion_consultar_fallas = tk.Label (ventana_consultar_fallas, text = "Ingrese en los campos en blanco sus datos correspondientes", font = "Helvetica 13")
+        instruccion_consultar_fallas.place (x= 75, y = 85)
+
+        #Elementos de la cita
+        descripcion_label = tk.Label (ventana_consultar_fallas, text = "Descripción de la falla:", font = "Helvetica 14 bold")
+        descripcion_label.place (x = 70, y = 140)
+
+        tipo_falla_label = tk.Label (ventana_consultar_fallas, text = "Tipo de la falla:", font = "Helvetica 14 bold")
+        tipo_falla_label.place (x = 360, y = 140)
+
+        descripcion_falla_entry = tk.Entry (ventana_consultar_fallas, textvariable = descripcion_falla, font = "Helvetica 12", width = 20, justify = "center")
+        descripcion_falla_entry.place (x = 75, y = 190)
+
+        tipo_falla_entry = tk.Entry (ventana_consultar_fallas, textvariable = tipo_falla, font = "Helvetica 12", width = 18, justify = "center")
+        tipo_falla_entry.place (x = 360, y = 190)
+
+        numero_falla_label = tk.Label (ventana_consultar_fallas, text = "Número de falla:", font = "Helvetica 14 bold")
+        numero_falla_label.place (x= 220, y = 250)
+
+        numero_falla_entry = tk.Entry (ventana_consultar_fallas, textvariable= numero_falla, font = "Helvetica 10 bold", width = 20, justify = "center")
+        numero_falla_entry.place (x= 220, y = 290)
+
+        boton_agregar_falla = tk.Button (ventana_consultar_fallas, text = "Consultar falla", font = "Helvetica 10 bold" , width = 23, height = 3, bg = "#08f26e", command = lambda: consulta (numero_falla_entry.get (), descripcion_falla_entry.get (), tipo_falla_entry.get()))
+        boton_agregar_falla.place (x = 195, y = 350)
+    
+    def modificar_fallas ():
+        def existencia (numero_falla, descripcion_falla, tipo_falla): #Validacion de existencia
+            for llave in lista_fallas:
+                if numero_falla == llave and descripcion_falla == lista_fallas [llave] [0] and tipo_falla == lista_fallas [llave] [1]:
+                    return True
+            return False
+        
+                
+        def modifica (numero_falla, descripcion_falla, tipo_falla, descripcion_falla_nuevo, tipo_falla_nuevo): #Valida y modifica los valores ingresados y los cambia por los nuevos
+            numero_falla = eval (numero_falla)
+            if not isinstance (numero_falla, int):
+                MessageBox.showerror ("Error", "El número de falla debe ser un entero")
+                return
+            
+            if  not tipo_falla in 'LeveGrave':
+                MessageBox.showerror ("Error", "El tipo de falla debe ser Leve o Grave")
+                return
+            
+            if  not tipo_falla_nuevo in 'LeveGrave':
+                MessageBox.showerror ("Error", "El tipo de falla debe ser Leve o Grave")
+                return
+            
+
+            
+            if numero_falla > 9999 or numero_falla < 1:
+                MessageBox.showerror ("Error", "El número de falla debe ser un entero entre 1 y 9999")
+                return
+            
+            if len (descripcion_falla) > 200 or len (descripcion_falla) < 5:
+                MessageBox.showerror ("Error", "La longitud de la descripción de la falla tiene que estar entre 5 y 200 caracteres")
+                return
+
+            if len (descripcion_falla_nuevo) > 200 or len (descripcion_falla_nuevo) < 5:
+                MessageBox.showerror ("Error", "La longitud de la descripción de la falla tiene que estar entre 5 y 200 caracteres")
+                return
+            
+            respuesta = existencia (numero_falla, descripcion_falla, tipo_falla)
+            if respuesta == False:
+                MessageBox.showerror ("Error", "La falla ingresada con los datos, no existe")
+                return
+            else:
+                lista_fallas [numero_falla] = (descripcion_falla_nuevo, tipo_falla_nuevo)
+                MessageBox.showinfo ("Modificar fallas", "Se ha modificado la falla correctamente")
+                print (lista_fallas)
+
+        ventana_consultar_fallas = tk.Toplevel ()
+        ventana_consultar_fallas.geometry ("600x550")
+        MessageBox.showwarning ("Consideración importante", "Se le mostrará dos espacios en blanco para cada uno de los 3 datos, el recuardo de arriba digite el dato actual. Para el nuevo digítelo en el espacio debajo del nuevo")
+
+        #Elementos de Bienvenida
+        label_principal_consultar_fallas = tk.Label (ventana_consultar_fallas, text = "Modificar fallas", font = "Helvetica 20 bold")
+        label_principal_consultar_fallas.place (x= 200, y = 40)
+        instruccion_consultar_fallas = tk.Label (ventana_consultar_fallas, text = "Ingrese en los campos en blanco sus datos correspondientes", font = "Helvetica 13")
+        instruccion_consultar_fallas.place (x= 75, y = 85)
+
+        #Elementos de la cita
+        descripcion_label = tk.Label (ventana_consultar_fallas, text = "Descripción de la falla:", font = "Helvetica 14 bold")
+        descripcion_label.place (x = 70, y = 140)
+
+        tipo_falla_label = tk.Label (ventana_consultar_fallas, text = "Tipo de la falla:", font = "Helvetica 14 bold")
+        tipo_falla_label.place (x = 360, y = 140)
+
+        descripcion_falla_entry = tk.Entry (ventana_consultar_fallas, textvariable = descripcion_falla, font = "Helvetica 12", width = 20, justify = "center")
+        descripcion_falla_entry.place (x = 75, y = 190)
+        descripcion_nueva = tk.Entry (ventana_consultar_fallas, textvariable = descripcion_falla2, font = "Helvetica 12", width = 20, justify = "center")
+        descripcion_nueva.place (x= 75, y = 240)
+
+
+        tipo_falla_entry = tk.Entry (ventana_consultar_fallas, textvariable = tipo_falla, font = "Helvetica 12", width = 18, justify = "center")
+        tipo_falla_entry.place (x = 360, y = 190)
+        tipo_falla_nueva = tk.Entry (ventana_consultar_fallas, textvariable = tipo_falla2, font = "Helvetica 12", width = 18, justify = "center")
+        tipo_falla_nueva.place (x = 360 ,y= 240)
+
+        numero_falla_label = tk.Label (ventana_consultar_fallas, text = "Número de falla:", font = "Helvetica 14 bold")
+        numero_falla_label.place (x= 220, y = 290)
+
+        numero_falla_entry = tk.Entry (ventana_consultar_fallas, textvariable= numero_falla, font = "Helvetica 10 bold", width = 20, justify = "center")
+        numero_falla_entry.place (x= 220, y = 340)
+
+        boton_agregar_falla = tk.Button (ventana_consultar_fallas, text = "Modificar falla", font = "Helvetica 10 bold" , width = 23, height = 3, bg = "#08f26e", command = lambda: modifica (numero_falla_entry.get (), descripcion_falla_entry.get (), tipo_falla_entry.get(), descripcion_nueva.get (), tipo_falla_nueva.get ()))
+        boton_agregar_falla.place (x = 195, y = 400)
+
+    def eliminar_fallas ():
+        def existencia (numero_falla, descripcion_falla, tipo_falla):
+            for llave in lista_fallas:
+                if numero_falla == llave and descripcion_falla == lista_fallas [llave] [0] and tipo_falla == lista_fallas [llave] [1]:
+                    return True
+            return False
+        
+                
+        def elimina (numero_falla, descripcion_falla, tipo_falla):
+            numero_falla = eval (numero_falla)
+            if not isinstance (numero_falla, int):
+                MessageBox.showerror ("Error", "El número de falla debe ser un entero")
+                return
+            
+            if  not tipo_falla in 'LeveGrave':
+                MessageBox.showerror ("Error", "El tipo de falla debe ser Leve o Grave")
+                return
+            
+            if numero_falla > 9999 or numero_falla < 1:
+                MessageBox.showerror ("Error", "El número de falla debe ser un entero entre 1 y 9999")
+                return
+            
+            if len (descripcion_falla) > 200 or len (descripcion_falla) < 5:
+                MessageBox.showerror ("Error", "La longitud de la descripción de la falla tiene que estar entre 5 y 200 caracteres")
+                return
+            
+            respuesta = existencia (numero_falla, descripcion_falla, tipo_falla)
+            if respuesta == False:
+                MessageBox.showerror ("Error", "La falla ingresada con los datos, no existe")
+                return
+            else:
+                del lista_fallas [numero_falla]
+                print (lista_fallas)
+
+        ventana_eliminar_fallas = tk.Toplevel ()
+        ventana_eliminar_fallas.geometry ("600x450")
+
+        #Elementos de Bienvenida
+        label_principal_eliminar_fallas = tk.Label (ventana_eliminar_fallas, text = "Eliminar fallas", font = "Helvetica 20 bold")
+        label_principal_eliminar_fallas.place (x= 200, y = 40)
+        instruccion_eliminar_fallas = tk.Label (ventana_eliminar_fallas, text = "Ingrese en los campos en blanco sus datos correspondientes", font = "Helvetica 13")
+        instruccion_eliminar_fallas.place (x= 75, y = 85)
+
+        #Elementos de la cita
+        descripcion_label = tk.Label (ventana_eliminar_fallas, text = "Descripción de la falla:", font = "Helvetica 14 bold")
+        descripcion_label.place (x = 70, y = 140)
+
+        tipo_falla_label = tk.Label (ventana_eliminar_fallas, text = "Tipo de la falla:", font = "Helvetica 14 bold")
+        tipo_falla_label.place (x = 360, y = 140)
+
+        descripcion_falla_entry = tk.Entry (ventana_eliminar_fallas, textvariable = descripcion_falla, font = "Helvetica 12", width = 20, justify = "center")
+        descripcion_falla_entry.place (x = 75, y = 190)
+
+        tipo_falla_entry = tk.Entry (ventana_eliminar_fallas, textvariable = tipo_falla, font = "Helvetica 12", width = 18, justify = "center")
+        tipo_falla_entry.place (x = 360, y = 190)
+
+        numero_falla_label = tk.Label (ventana_eliminar_fallas, text = "Número de falla:", font = "Helvetica 14 bold")
+        numero_falla_label.place (x= 220, y = 250)
+
+        numero_falla_entry = tk.Entry (ventana_eliminar_fallas, textvariable= numero_falla, font = "Helvetica 10 bold", width = 20, justify = "center")
+        numero_falla_entry.place (x= 220, y = 290)
+
+        boton_agregar_falla = tk.Button (ventana_eliminar_fallas, text = "Eliminar falla", font = "Helvetica 10 bold" , width = 23, height = 3, bg = "#08f26e", command = lambda: elimina (numero_falla_entry.get (), descripcion_falla_entry.get (), tipo_falla_entry.get()))
+        boton_agregar_falla.place (x = 195, y = 350)
+
 
 
 
@@ -1066,6 +1365,15 @@ valor_seleccionado_automatico = None
 info_cita = None
 colas_espera = [ ]
 colas_revision = [ ]
+lista_fallas = {1: ("Falta de mufla", "Grave"), 2: ("Fallo de luces", "Leve")}
+descripcion_falla = tk.StringVar ()
+tipo_falla = tk.StringVar ()
+numero_falla = tk.StringVar ()
+
+descripcion_falla2 = tk.StringVar ()
+tipo_falla2 = tk.StringVar ()
+numero_falla2 = tk.StringVar ()
+
 numero_placa_cancelar = tk.StringVar ()
 contador_citas_cancelar = tk.StringVar ()
 numero_placa_ingresar = tk.StringVar ()
