@@ -1650,8 +1650,13 @@ def tablero_revision():
         
         # R TERMINADO
         elif comando == "R":
+            global salida_forzada, cant_lineas_trabajo_fija
+            comando_entry.destroy()
+            comando_etiqueta.destroy()
+            ejecutar_boton.destroy()
             tablero_ventana.destroy()
-        
+            lista_lineas_etiquetas.clear()
+            salida_forzada = True
         # Comando no valido
         else:
             MessageBox.showerror("Comando inválido", "El comando que fue ingresado no es válido")
@@ -1685,6 +1690,8 @@ def tablero_revision():
 
     comando_variable = StringVar()
 
+
+    global ultima_linea
     for i in range(cant_lineas_trabajo_fija):
         numero_linea = Label(tablero_ventana, text=str(i+1), font="Helvetica 9")
         numero_linea.place(x=80, y=65 + 25*i)
@@ -1695,13 +1702,25 @@ def tablero_revision():
             linea_placas_etiquetas.append(placa_etiqueta) 
         lista_lineas_etiquetas.append(linea_placas_etiquetas)
 
+    ultima_linea = i
+    if salida_forzada != None:
+        for i, linea in enumerate(lista_lineas_placas):
+            if len(linea) != 0:
+                for j, placa in enumerate(linea):
+                    lista_lineas_etiquetas[i][j].config(text=placa)
+                    if placa in placas_graves:
+                        lista_lineas_etiquetas[i][j].config(fg="red")
+                    else:
+                        lista_lineas_etiquetas[i][j].config(fg="black")
+        
+
     comando_etiqueta = Label(tablero_ventana, text="COMANDO: ", font="Helvetica 13 bold")
     comando_entry = Entry(tablero_ventana, textvariable=comando_variable)
     ejecutar_boton = Button(tablero_ventana, text="Ejecutar", font="Helvetica 9", bg="brown", command=lambda: ejecutar(comando_variable.get()))
 
-    comando_etiqueta.place(x=80, y=70 + 25*(i+1))
-    comando_entry.place(x=180, y=72 + 25*(i+1))
-    ejecutar_boton.place(x=310, y=69 + 25*(i+1))
+    comando_etiqueta.place(x=80, y=70 + 25*(ultima_linea+1))
+    comando_entry.place(x=180, y=72 + 25*(ultima_linea+1))
+    ejecutar_boton.place(x=310, y=69 + 25*(ultima_linea+1))
 
 
     tablero_ventana.mainloop()
@@ -1753,13 +1772,14 @@ contador_citas = 2
 bandera_entro_configuracion = False
 cantidad_de_horas_mostrar = []
 
-citas = [[1, 'Primera vez', 'BNS-150', 'Automóvil particular y vehículo de carga liviana (<3500kg)', 'Toyota', 'Forturner 4x4', 'Miguel Francisco Gonzalez', '01234567890123456789', 'josemiguel4484@gmail.com', 'Belén, Heredia', '18/06/2023 02:50 PM', 'PENDIENTE'], [], 
+citas = [[1, 'Primera vez', 'BNS-150', 'Automóvil particular y vehículo de carga liviana (<3500kg)', 'Toyota', 'Forturner 4x4', 'Miguel Francisco Gonzalez', '01234567890123456789', 'josemiguel4484@gmail.com', 'Belén, Heredia', '18/06/2023 10:50 PM', 'PENDIENTE'], [], 
             [[2, 'Primera vez', 'BNS-150', 'Automóvil particular y vehículo de carga liviana (<3500kg)', 'Toyota', 'Forturner 4x4', 'Miguel Francisco Gonzalez', '01234567890123456789', 'josemiguel4484@gmail.com', 'Belén, Heredia', '17/06/2023 04:00 PM', 'PENDIENTE'], []]]
 
 valor_seleccionado_manual = None
 valor_seleccionado_automatico = None
 info_cita = None
 bandera_configuracion = None
+salida_forzada = None
 lista_colas_espera = [ ]
 lista_lineas_placas = [ ]
 lista_lineas_etiquetas = []
